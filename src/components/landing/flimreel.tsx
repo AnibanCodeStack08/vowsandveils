@@ -3,13 +3,60 @@ import { Volume2, VolumeX } from "lucide-react";
 
 const flimreelVideo = "/videos/flimreel.mp4";
 
-const Flimreel = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(true);
-  const [inView, setInView] = useState(false);
+const FADE_DURATION = 900; // ms
 
-  // Play only while the spacer is in view; pause otherwise.
+const Flimreel = () => {
+  const ref      = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fadeRafRef           = useRef<number | null>(null);
+  const hasInteractedRef     = useRef(false); // user has clicked unmute at least once
+  const [muted, setMuted]    = useState(true);
+  const [inView, setInView]  = useState(false);
+
+  // ── Helper: cancel any in-progress fade ────────────────────────────────
+  const cancelFade = () => {
+    if (fadeRafRef.current !== null) {
+      cancelAnimationFrame(fadeRafRef.current);
+      fadeRafRef.current = null;
+    }
+  };
+
+  // ── Helper: rAF-based volume fade with ease-out ─────────────────────────
+  const fadeVolume = (
+    el: HTMLVideoElement,
+    target: number,
+    onComplete?: () => void
+  ) => {
+    cancelFade();
+
+    const start = el.volume;
+    const delta = target - start;
+
+    if (Math.abs(delta) < 0.001) {
+      onComplete?.();
+      return;
+    }
+
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / FADE_DURATION, 1);
+      const eased    = 1 - Math.pow(1 - progress, 3); // cubic ease-out
+
+      el.volume = Math.min(1, Math.max(0, start + delta * eased));
+
+      if (progress < 1) {
+        fadeRafRef.current = requestAnimationFrame(tick);
+      } else {
+        fadeRafRef.current = null;
+        onComplete?.();
+      }
+    };
+
+    fadeRafRef.current = requestAnimationFrame(tick);
+  };
+
+  // ── Play / pause + smooth mute on intersection ─────────────────────────
   useEffect(() => {
     const v = videoRef.current;
     const s = ref.current;
@@ -18,22 +65,59 @@ const Flimreel = () => {
     const io = new IntersectionObserver(
       ([e]) => {
         setInView(e.isIntersecting);
-        if (e.isIntersecting) v.play().catch(() => {});
-        else v.pause();
+
+        if (e.isIntersecting) {
+          v.play().catch(() => {});
+
+          // Fade volume up only if the user has already unmuted
+          if (hasInteractedRef.current) {
+            v.muted  = false;
+            v.volume = v.volume === 1 ? 1 : v.volume; // keep current if mid-fade
+            fadeVolume(v, 1);
+          }
+        } else {
+          // Fade out first, then mute & pause
+          if (!v.muted) {
+            fadeVolume(v, 0, () => {
+              v.muted = true;
+              setMuted(true);
+              v.pause();
+            });
+          } else {
+            v.pause();
+          }
+        }
       },
-      { threshold: 0.01 }
+      { threshold: [0, 0.01] }
     );
 
     io.observe(s);
-    return () => io.disconnect();
-  }, []);
+    return () => {
+      io.disconnect();
+      cancelFade();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Toggle mute button ─────────────────────────────────────────────────
   const toggleMute = () => {
     const v = videoRef.current;
     if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
-    if (!v.muted) v.play().catch(() => {});
+
+    if (v.muted) {
+      // Unmuting: mark interaction, unmute element, fade in
+      hasInteractedRef.current = true;
+      v.muted  = false;
+      v.volume = 0;
+      v.play().catch(() => {});
+      fadeVolume(v, 1);
+      setMuted(false);
+    } else {
+      // Muting: fade out, then mute
+      fadeVolume(v, 0, () => {
+        v.muted = true;
+        setMuted(true);
+      });
+    }
   };
 
   return (

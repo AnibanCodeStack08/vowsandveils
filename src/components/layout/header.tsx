@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const logo = "images/profile/header-logo.jpeg";
+const logo = "/images/profile/header-logo.jpeg";
 
 const leftLinks = [
   { href: "/", label: "Home" },

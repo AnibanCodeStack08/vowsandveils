@@ -2,11 +2,62 @@ import { useEffect, useRef } from "react";
 
 const video = "/videos/header-bg.mp4";
 
+// Duration in ms over which volume fades in/out
+const FADE_DURATION = 900;
+
 function Hero() {
-  const videoRef    = useRef<HTMLVideoElement>(null);
-  const sectionRef  = useRef<HTMLElement>(null);
-  const isVisibleRef     = useRef(true);   // is the section in the viewport?
-  const hasInteractedRef = useRef(false);  // has the user gestured yet?
+  const videoRef         = useRef<HTMLVideoElement>(null);
+  const sectionRef       = useRef<HTMLElement>(null);
+  const isVisibleRef     = useRef(true);
+  const hasInteractedRef = useRef(false);
+  const fadeRafRef       = useRef<number | null>(null); // active rAF handle
+
+  // ── Helper: cancel any in-progress fade ──────────────────────────────────
+  const cancelFade = () => {
+    if (fadeRafRef.current !== null) {
+      cancelAnimationFrame(fadeRafRef.current);
+      fadeRafRef.current = null;
+    }
+  };
+
+  // ── Helper: smoothly fade volume from current → target over FADE_DURATION ─
+  //    onComplete is called only when the target is actually reached.
+  const fadeVolume = (
+    el: HTMLVideoElement,
+    targetVolume: number,
+    onComplete?: () => void
+  ) => {
+    cancelFade();
+
+    const startVolume = el.volume;
+    const delta       = targetVolume - startVolume;
+
+    // Nothing to do
+    if (Math.abs(delta) < 0.001) {
+      onComplete?.();
+      return;
+    }
+
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed  = now - startTime;
+      const progress = Math.min(elapsed / FADE_DURATION, 1);
+      // ease-out curve for a natural feel
+      const eased    = 1 - Math.pow(1 - progress, 3);
+
+      el.volume = Math.min(1, Math.max(0, startVolume + delta * eased));
+
+      if (progress < 1) {
+        fadeRafRef.current = requestAnimationFrame(tick);
+      } else {
+        fadeRafRef.current = null;
+        onComplete?.();
+      }
+    };
+
+    fadeRafRef.current = requestAnimationFrame(tick);
+  };
 
   // ── 1. AUTOPLAY — always start muted (browser requirement) ───────────────
   useEffect(() => {
@@ -14,30 +65,27 @@ function Hero() {
     if (!el) return;
 
     el.muted  = true;
-    el.volume = 1; // pre-set so unmute is instant, not jarring
+    el.volume = 0; // start at 0; unmute flow will set muted=false + fade in
 
     el.play().catch((err) => console.warn("Autoplay blocked:", err));
   }, []);
 
   // ── 2. UNLOCK — unmute on first click / tap / key (NOT scroll) ───────────
-  //
-  //  ⚠️  "scroll" intentionally removed:
-  //      scroll is also the trigger for the Intersection Observer.
-  //      Having it here caused a state update mid-scroll that tore down
-  //      and rebuilt the observer, which paused/glitched the video.
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
     const unlock = () => {
+      if (hasInteractedRef.current) return; // guard against double-fire
       hasInteractedRef.current = true;
 
-      // Only unmute if the hero is currently visible
       if (isVisibleRef.current) {
-        el.muted = false;
+        // Unmute the element, then fade volume up from 0 → 1
+        el.muted  = false;
+        el.volume = 0;
+        fadeVolume(el, 1);
       }
 
-      // One-shot — remove immediately after the first gesture
       window.removeEventListener("click",      unlock);
       window.removeEventListener("touchstart", unlock);
       window.removeEventListener("keydown",    unlock);
@@ -52,13 +100,9 @@ function Hero() {
       window.removeEventListener("touchstart", unlock);
       window.removeEventListener("keydown",    unlock);
     };
-  }, []); // ← runs once; refs don't need to be in deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── 3. INTERSECTION OBSERVER — mute/unmute as hero enters/leaves view ────
-  //
-  //  ⚠️  Empty dep array [] is intentional and critical:
-  //      The observer must NEVER be torn down mid-scroll.
-  //      It reads hasInteractedRef / isVisibleRef directly (always current).
+  // ── 3. INTERSECTION OBSERVER — fade audio as hero enters / leaves view ───
   useEffect(() => {
     const videoEl   = videoRef.current;
     const sectionEl = sectionRef.current;
@@ -68,26 +112,29 @@ function Hero() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Debounce absorbs rapid-fire events during fast scrolling
         if (debounce) clearTimeout(debounce);
 
         debounce = setTimeout(() => {
           isVisibleRef.current = entry.isIntersecting;
 
           if (entry.isIntersecting) {
-            // Scrolled back in — unmute only if the user has already clicked
+            // Back in view — fade up only if user has already interacted
+            if (hasInteractedRef.current && videoEl.muted) {
+              videoEl.muted  = false;
+              videoEl.volume = 0;
+            }
             if (hasInteractedRef.current) {
-              videoEl.muted = false;
+              fadeVolume(videoEl, 1);
             }
           } else {
-            // Scrolled out — always safe to mute
-            videoEl.muted = true;
+            // Leaving view — fade volume down, THEN mute
+            fadeVolume(videoEl, 0, () => {
+              videoEl.muted = true;
+            });
           }
         }, 150);
       },
       {
-        // 0   → fires the instant ANY part leaves the viewport (for muting)
-        // 0.1 → fires once 10 % is back in view (avoids hair-trigger unmute)
         threshold: [0, 0.1],
       }
     );
@@ -97,8 +144,9 @@ function Hero() {
     return () => {
       observer.disconnect();
       if (debounce) clearTimeout(debounce);
+      cancelFade();
     };
-  }, []); // ← empty: observer is created once and lives until unmount
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section
@@ -108,7 +156,18 @@ function Hero() {
     >
       <video
         ref={videoRef}
-        className="absolute top-0 left-0 w-full h-full object-cover"
+        /*
+         * Responsive sizing:
+         * - w-full h-full        → fills the section in both axes
+         * - object-cover         → crops to fill without distortion on any
+         *                          screen size (mobile portrait included)
+         * - min-w-full min-h-full → belt-and-suspenders for older browsers
+         */
+        className="
+          absolute inset-0
+          w-full h-full min-w-full min-h-full
+          object-cover object-center
+        "
         src={video}
         loop
         playsInline
