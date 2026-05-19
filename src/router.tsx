@@ -10,18 +10,19 @@ import { useEffect } from "react";
 
 import App from "./App";
 
-import VideoGallery from "./components/pages/video-gallery.tsx";
-import TeamAboutPage from "./components/pages/team-about.tsx";
-import Adhibash from "./components/pages/adhibash.tsx";
-import Haldi from "./components/pages/haldi.tsx";
-import Engagement from "./components/pages/engagement.tsx";
-import PreWedding from "./components/pages/prewedding.tsx";
-import Wedding from "./components/pages/wedding.tsx";
+import VideoGallery from "./components/pages/video-gallery";
+import TeamAboutPage from "./components/pages/team-about";
+import Adhibash from "./components/pages/adhibash";
+import Haldi from "./components/pages/haldi";
+import Engagement from "./components/pages/engagement";
+import PreWedding from "./components/pages/prewedding";
+import Wedding from "./components/pages/wedding";
+import Contact from "./components/pages/contact";
+import Baby from "./components/pages/baby";
 
 import { Header } from "./components/layout/header";
 import Footer from "./components/layout/footer";
-import Contact from "./components/pages/contact.tsx";
-import Baby from "./components/pages/baby.tsx";
+
 
 function ScrollToTop() {
   const { pathname } = useLocation();

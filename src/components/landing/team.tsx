@@ -89,20 +89,36 @@ export default function Team({
       />
       <FilmGrain />
 
-      <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-10">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 md:px-10 md:py-24">
+
+        {/* ── Header row ── */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-10">
           <div className="md:col-span-8">
-            <p className="sp-eyebrow hairline" style={{ color: "var(--color-gold)" }}>
+            <p className="sp-eyebrow hairline text-xs sm:text-sm" style={{ color: "var(--color-gold)" }}>
               — {eyebrow}
             </p>
-            <h2 id="team-heading" className="sp-title font-display mt-5 text-balance text-5xl leading-[1.02] md:text-7xl">
+            <h2
+              id="team-heading"
+              className="sp-title font-display mt-4 text-balance leading-[1.02] text-4xl sm:text-5xl md:text-7xl"
+            >
               {title}
             </h2>
-            <div className="sp-rule gold-line mt-6 w-40" />
-            <p className="sp-desc mt-5 max-w-xl text-base text-muted-foreground md:text-lg">{description}</p>
+            <div className="sp-rule gold-line mt-5 w-32 sm:w-40" />
+            <p className="sp-desc mt-4 max-w-xl text-sm text-muted-foreground sm:text-base md:text-lg">
+              {description}
+            </p>
           </div>
+
+          {/* Meta — desktop: aside column | mobile: compact horizontal strip */}
           <aside className="md:col-span-4 md:pt-3">
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm md:grid-cols-1">
+            {/* Mobile: horizontal row of metas */}
+            <dl className="flex items-center gap-0 divide-x divide-border/60 border border-border/40 md:hidden">
+              <MetaCompact label="Cast" value={String(members.length).padStart(2, "0")} />
+              <MetaCompact label="Reel" value="2026 · 35mm" />
+              <MetaCompact label="Now" value={`#${String(active + 1).padStart(2, "0")} ${member.name.split(" ")[0]}`} />
+            </dl>
+            {/* Desktop: stacked */}
+            <dl className="hidden md:grid md:grid-cols-1 gap-x-6 gap-y-4 text-sm">
               <Meta label="Cast" value={String(members.length).padStart(2, "0")} />
               <Meta label="Reel" value="2026 · 35mm" />
               <Meta label="Now" value={`#${String(active + 1).padStart(2, "0")} ${member.name.split(" ")[0]}`} />
@@ -110,40 +126,73 @@ export default function Team({
           </aside>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 md:mt-16 md:grid-cols-12 md:gap-10">
-          <div className="sp-stage relative md:col-span-8">
-            <div
-              className="relative mx-auto w-full max-w-md h-125 overflow-hidden rounded-md bg-card md:max-w-lg"
-              style={{ boxShadow: "0 40px 100px -40px color-mix(in oklab, var(--color-gold) 25%, transparent)" }}
-            >
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={active}
-                  className="absolute inset-0"
-                  initial={{ clipPath: "inset(0 0 100% 0)", scale: 1.1 }}
-                  animate={{ clipPath: "inset(0 0 0% 0)", scale: 1 }}
-                  exit={{ clipPath: "inset(100% 0 0 0)", scale: 1.05 }}
-                  transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] }}
-                >
-                  <motion.div
-                    className="absolute inset-0"
-                    initial={{ scale: 1.0 }}
-                    animate={{ scale: 1.06 }}
-                    transition={{ duration: 8, ease: "easeOut" }}
-                  >
-                    <Portrait member={member} />
-                  </motion.div>
-                </motion.div>
-              </AnimatePresence>
+        {/* ── Main body ── */}
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:mt-10 md:mt-16 md:grid-cols-12 md:gap-10">
 
-              <Corner className="left-3 top-3" />
-              <Corner className="right-3 top-3 rotate-90" />
-              <Corner className="bottom-3 left-3 -rotate-90" />
-              <Corner className="bottom-3 right-3 rotate-180" />
+          {/* ── Portrait + caption + progress + CTA ── */}
+          <div className="sp-stage md:col-span-8">
+
+            {/* On mobile: side-by-side portrait + cast list */}
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-5 md:block">
+
+              {/* Portrait frame */}
+              <div
+                className="relative w-full overflow-hidden rounded-md bg-card
+                            sm:w-[48%] sm:flex-shrink-0
+                            md:w-full md:max-w-lg md:mx-auto"
+                style={{
+                  /* Mobile: natural aspect-ratio portrait; tablet/desktop override via height below */
+                  aspectRatio: "3/4",
+                  maxHeight: "clamp(280px, 55vw, 500px)",
+                  boxShadow: "0 40px 100px -40px color-mix(in oklab, var(--color-gold) 25%, transparent)",
+                }}
+              >
+                {/* desktop: fixed height override */}
+                <style>{`@media (min-width: 768px) { .portrait-frame { height: 31.25rem; aspect-ratio: unset; max-height: unset; } }`}</style>
+
+                <AnimatePresence mode="popLayout">
+                  <motion.div
+                    key={active}
+                    className="absolute inset-0"
+                    initial={{ clipPath: "inset(0 0 100% 0)", scale: 1.1 }}
+                    animate={{ clipPath: "inset(0 0 0% 0)", scale: 1 }}
+                    exit={{ clipPath: "inset(100% 0 0 0)", scale: 1.05 }}
+                    transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] }}
+                  >
+                    <motion.div
+                      className="absolute inset-0"
+                      initial={{ scale: 1.0 }}
+                      animate={{ scale: 1.06 }}
+                      transition={{ duration: 8, ease: "easeOut" }}
+                    >
+                      <Portrait member={member} />
+                    </motion.div>
+                  </motion.div>
+                </AnimatePresence>
+
+                <Corner className="left-2 top-2 sm:left-3 sm:top-3" />
+                <Corner className="right-2 top-2 rotate-90 sm:right-3 sm:top-3" />
+                <Corner className="bottom-2 left-2 -rotate-90 sm:bottom-3 sm:left-3" />
+                <Corner className="bottom-2 right-2 rotate-180 sm:bottom-3 sm:right-3" />
+              </div>
+
+              {/* Mobile-only inline cast list (sits beside the portrait on sm+) */}
+              <ol className="flex-1 sm:flex sm:flex-col sm:justify-center md:hidden">
+                {members.map((m, i) => (
+                  <CastRow
+                    key={m.name}
+                    member={m}
+                    index={i}
+                    isActive={i === active}
+                    onActivate={() => setActive(i)}
+                    compact
+                  />
+                ))}
+              </ol>
             </div>
 
             {/* Caption */}
-            <div className="mx-auto mt-6 max-w-md text-center md:max-w-lg md:mt-8">
+            <div className="mt-5 text-center sm:mt-6 md:mt-8 md:mx-auto md:max-w-lg">
               <div className="overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.h3
@@ -152,13 +201,13 @@ export default function Team({
                     animate={{ y: 0 }}
                     exit={{ y: "-100%" }}
                     transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                    className="font-display text-balance text-4xl leading-none md:text-6xl"
+                    className="font-display text-balance leading-none text-3xl sm:text-4xl md:text-6xl"
                   >
                     {member.name}
                   </motion.h3>
                 </AnimatePresence>
               </div>
-              <div className="mt-3 flex flex-col items-center gap-3">
+              <div className="mt-3 flex flex-col items-center gap-2 sm:gap-3">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={member.role + active}
@@ -166,13 +215,13 @@ export default function Team({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.45, delay: 0.15 }}
-                    className="hairline"
+                    className="hairline text-xs sm:text-sm"
                     style={{ color: "var(--color-gold)" }}
                   >
                     {member.role}
                   </motion.span>
                 </AnimatePresence>
-                <span aria-hidden className="h-px w-10" style={{ background: "var(--color-gold)" }} />
+                <span aria-hidden className="h-px w-8 sm:w-10" style={{ background: "var(--color-gold)" }} />
                 {member.quote && (
                   <AnimatePresence mode="wait">
                     <motion.p
@@ -181,7 +230,7 @@ export default function Team({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.5, delay: 0.25 }}
-                      className="font-display max-w-sm text-base italic text-foreground/85 md:text-xl"
+                      className="font-display max-w-xs italic text-foreground/85 text-sm sm:max-w-sm sm:text-base md:text-xl"
                     >
                       "{member.quote}"
                     </motion.p>
@@ -191,13 +240,13 @@ export default function Team({
             </div>
 
             {/* Progress bars */}
-            <div className="mt-5 flex items-center gap-2">
+            <div className="mt-4 flex items-center gap-1.5 sm:mt-5 sm:gap-2">
               {members.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setActive(i)}
                   aria-label={`Show ${members[i].name}`}
-                  className="relative h-1 flex-1 overflow-hidden rounded-full"
+                  className="relative h-[3px] flex-1 overflow-hidden rounded-full sm:h-1"
                   style={{ background: "var(--color-border)" }}
                 >
                   <motion.span
@@ -214,13 +263,14 @@ export default function Team({
               ))}
             </div>
 
-            {/* CTA Button */}
-            <div className="sp-cta mx-auto mt-10 max-w-md flex justify-center md:max-w-lg">
+            {/* CTA */}
+            <div className="sp-cta mt-7 flex justify-center sm:mt-8 md:mt-10 md:max-w-lg md:mx-auto">
               <CtaButton onClick={() => navigate("/team-about")} />
             </div>
           </div>
 
-          <ol className="md:col-span-4">
+          {/* Desktop-only cast list */}
+          <ol className="hidden md:block md:col-span-4">
             {members.map((m, i) => (
               <CastRow
                 key={m.name}
@@ -268,7 +318,7 @@ function CtaButton({ onClick }: { onClick: () => void }) {
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={handleMouseLeave}
-      className="group relative overflow-hidden border px-8 py-4 transition-colors duration-300 focus:outline-none"
+      className="group relative overflow-hidden border px-6 py-3 transition-colors duration-300 focus:outline-none sm:px-8 sm:py-4"
       aria-label="Meet the full atelier"
       style={{
         x: translateX,
@@ -277,7 +327,6 @@ function CtaButton({ onClick }: { onClick: () => void }) {
         color: hovered ? "var(--color-background)" : "var(--color-foreground)",
       }}
     >
-      {/* Sliding gold fill */}
       <motion.span
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -286,39 +335,33 @@ function CtaButton({ onClick }: { onClick: () => void }) {
         animate={{ y: hovered ? "0%" : "101%" }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       />
-
-      {/* Shimmer sweep */}
       <motion.span
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
-          background:
-            "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
+          background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
           backgroundSize: "200% 100%",
         }}
         animate={hovered ? { backgroundPosition: ["200% 0", "-200% 0"] } : { backgroundPosition: "200% 0" }}
         transition={{ duration: 0.7, ease: "easeInOut" }}
       />
-
-      <span className="relative z-10 flex items-center gap-3">
-        <span className="hairline tracking-widest text-sm uppercase">Meet the full Atelier</span>
+      <span className="relative z-10 flex items-center gap-2 sm:gap-3">
+        <span className="hairline text-xs tracking-widest uppercase sm:text-sm">Meet the full Atelier</span>
         <motion.span
           aria-hidden
-          className="font-display text-xl leading-none"
+          className="font-display text-lg leading-none sm:text-xl"
           animate={{ x: hovered ? 4 : 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
           →
         </motion.span>
       </span>
-
-      {/* Gold corner accents that grow on hover */}
       {(["left-0 top-0", "right-0 top-0 rotate-90", "left-0 bottom-0 -rotate-90", "right-0 bottom-0 rotate-180"] as const).map(
         (cls, i) => (
           <motion.span
             key={i}
             aria-hidden
-            className={`pointer-events-none absolute h-2.5 w-2.5 ${cls}`}
+            className={`pointer-events-none absolute h-2 w-2 sm:h-2.5 sm:w-2.5 ${cls}`}
             style={{ borderTop: "1px solid var(--color-gold)", borderLeft: "1px solid var(--color-gold)" }}
             animate={{ opacity: hovered ? 1 : 0.4, scale: hovered ? 1.3 : 1 }}
             transition={{ duration: 0.3 }}
@@ -336,11 +379,13 @@ function CastRow({
   index,
   isActive,
   onActivate,
+  compact = false,
 }: {
   member: TeamMember;
   index: number;
   isActive: boolean;
   onActivate: () => void;
+  compact?: boolean;
 }) {
   const ref = useRef<HTMLLIElement>(null);
   const mx = useMotionValue(0);
@@ -362,37 +407,43 @@ function CastRow({
       onMouseLeave={() => mx.set(0)}
       onFocus={onActivate}
       tabIndex={0}
-      style={{ x: tx }}
+      style={{ x: compact ? 0 : tx }}
     >
       <button
         type="button"
         onClick={onActivate}
-        className="flex w-full items-center justify-between gap-4 py-4 text-left md:py-5"
+        className={`flex w-full items-center justify-between gap-3 text-left ${
+          compact ? "py-2.5" : "py-4 gap-4 md:py-5"
+        }`}
       >
-        <div className="flex items-baseline gap-4">
+        <div className="flex items-baseline gap-2 sm:gap-4">
           <span
-            className="font-display text-sm tabular-nums transition-colors"
+            className={`font-display tabular-nums transition-colors ${compact ? "text-xs" : "text-sm"}`}
             style={{ color: isActive ? "var(--color-gold)" : "var(--color-muted-foreground)" }}
           >
             {String(index + 1).padStart(2, "0")}
           </span>
           <div>
             <motion.span
-              className="font-display block text-2xl leading-tight md:text-3xl"
+              className={`font-display block leading-tight ${
+                compact ? "text-base sm:text-lg" : "text-2xl md:text-3xl"
+              }`}
               animate={{
-                x: isActive ? 6 : 0,
+                x: isActive ? 4 : 0,
                 color: isActive ? "var(--color-foreground)" : "var(--color-muted-foreground)",
               }}
               transition={{ duration: 0.4, ease: "easeOut" }}
             >
               {member.name}
             </motion.span>
-            <span className="hairline mt-1 block text-muted-foreground">{member.role}</span>
+            <span className={`hairline mt-0.5 block text-muted-foreground ${compact ? "text-[10px]" : "mt-1"}`}>
+              {member.role}
+            </span>
           </div>
         </div>
         <motion.span
           aria-hidden
-          className="font-display text-2xl"
+          className={`font-display ${compact ? "text-base" : "text-2xl"}`}
           style={{ color: "var(--color-gold)" }}
           animate={{ x: isActive ? 0 : -8, opacity: isActive ? 1 : 0 }}
           transition={{ duration: 0.35 }}
@@ -409,6 +460,18 @@ function CastRow({
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       />
     </motion.li>
+  );
+}
+
+/** Compact horizontal meta cell for mobile strip */
+function MetaCompact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-0.5 px-2 py-2">
+      <dt className="hairline text-[9px] uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dd className="font-display text-sm leading-none" style={{ color: "var(--color-gold-soft)" }}>
+        {value}
+      </dd>
+    </div>
   );
 }
 
@@ -433,7 +496,7 @@ function Portrait({ member }: { member: TeamMember }) {
         className="flex h-full w-full items-center justify-center"
         style={{ background: "linear-gradient(135deg, oklch(0.26 0 0), oklch(0.13 0 0))" }}
       >
-        <span className="font-display text-7xl" style={{ color: "var(--color-gold)" }}>
+        <span className="font-display text-5xl sm:text-7xl" style={{ color: "var(--color-gold)" }}>
           {initials}
         </span>
       </div>
@@ -455,7 +518,7 @@ function Corner({ className = "" }: { className?: string }) {
   return (
     <span
       aria-hidden
-      className={`pointer-events-none absolute h-3 w-3 ${className}`}
+      className={`pointer-events-none absolute h-2.5 w-2.5 sm:h-3 sm:w-3 ${className}`}
       style={{ borderTop: "1px solid var(--color-gold)", borderLeft: "1px solid var(--color-gold)" }}
     />
   );

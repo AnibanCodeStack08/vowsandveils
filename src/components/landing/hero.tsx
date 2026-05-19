@@ -152,21 +152,21 @@ function Hero() {
     <section
       ref={sectionRef}
       id="home"
-      className="relative w-full h-screen overflow-hidden"
+      className="relative w-full h-screen overflow-hidden bg-black"
     >
       <video
         ref={videoRef}
         /*
-         * Responsive sizing:
-         * - w-full h-full        → fills the section in both axes
-         * - object-cover         → crops to fill without distortion on any
-         *                          screen size (mobile portrait included)
-         * - min-w-full min-h-full → belt-and-suspenders for older browsers
+         * Mobile  (< md) → object-contain  : entire video visible, black bars
+         * Desktop (≥ md) → object-cover    : fills frame, minor edge crop
+         *
+         * absolute inset-0 + w-full h-full keep it locked to the section.
          */
         className="
           absolute inset-0
-          w-full h-full min-w-full min-h-full
-          object-cover object-center
+          w-full h-full
+          object-contain md:object-cover
+          object-center
         "
         src={video}
         loop
