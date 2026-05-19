@@ -36,7 +36,7 @@ export default function LiteYouTube({ id, title }: LiteYouTubeProps) {
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover/play:scale-105"
       />
       {/* Subtle dark overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-background/10 to-transparent transition-opacity duration-500 group-hover/play:opacity-80" />
+      <div className="absolute inset-0 bg-linear-to-t from-background/60 via-background/10 to-transparent transition-opacity duration-500 group-hover/play:opacity-80" />
 
       {/* Custom play button */}
       <div className="absolute inset-0 flex items-center justify-center">

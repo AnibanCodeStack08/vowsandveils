@@ -23,7 +23,7 @@ const About = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.9 }}
-          className="relative aspect-[3/4] overflow-hidden"
+          className="relative aspect-3/4 overflow-hidden"
         >
           <img
             src={profile}
@@ -36,7 +36,7 @@ const About = () => {
         {/* text right */}
         <div>
           <span className="hairline text-accent">The Photographer</span>
-          <h2 className="font-display text-5xl md:text-6xl mt-4 leading-[1]">
+          <h2 className="font-display text-5xl md:text-6xl mt-4 leading-none">
             Santanu Das
           </h2>
           <p className="font-display italic text-2xl text-accent mt-3">

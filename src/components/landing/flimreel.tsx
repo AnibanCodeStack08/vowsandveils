@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 const flimreelVideo = "/videos/flimreel.mp4";
@@ -52,7 +52,7 @@ const Flimreel = () => {
           playsInline
           preload="metadata"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-black/40" />
       </div>
 
       {/* Spacer section */}

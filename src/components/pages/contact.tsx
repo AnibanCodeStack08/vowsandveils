@@ -169,7 +169,7 @@ export default function Contact() {
       {/* Decorative gold glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full opacity-[0.08] blur-3xl"
+        className="pointer-events-none absolute -top-32 left-1/2 h-105 w-105 -translate-x-1/2 rounded-full opacity-[0.08] blur-3xl"
         style={{ background: "var(--color-gold)" }}
       />
 

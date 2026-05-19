@@ -67,7 +67,7 @@ function LozengeDivider({ className }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center gap-3 w-full ${className ?? ""}`}>
       <span
-        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
+        className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
           background:
             "linear-gradient(to right, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -85,7 +85,7 @@ function LozengeDivider({ className }: { className?: string }) {
         />
       </svg>
       <span
-        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
+        className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
           background:
             "linear-gradient(to left, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -213,7 +213,7 @@ export default function Adhibash({
       {/* Wide centred glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[640px]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-160"
         style={{
           background:
             "radial-gradient(ellipse 80% 65% at 50% -5%, color-mix(in oklab, var(--color-gold) 15%, transparent), transparent 60%)",
@@ -255,7 +255,7 @@ export default function Adhibash({
         }}
       />
 
-      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+      <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
 
         {/* ── HEADER — centred ─────────────────────────────────────────────── */}
         <div
@@ -360,11 +360,11 @@ export default function Adhibash({
 
         {/* ── MASONRY GRID ──────────────────────────────────────────────────── */}
         <div
-          className="grid items-stretch gap-[3px]"
+          className="grid items-stretch gap-0.75"
           style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
         >
           {columns.map((colIndices, ci) => (
-            <div key={ci} className="flex h-full flex-col gap-[3px]">
+            <div key={ci} className="flex h-full flex-col gap-0.75">
               {colIndices.map((globalIndex, position) => (
                 <Tile
                   key={images[globalIndex].src + globalIndex}
@@ -536,7 +536,7 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
 
       {/* Caption slide-up */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-[480ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
+        className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-480 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
         style={{
           background:
             "linear-gradient(to top, color-mix(in oklab, var(--color-background) 82%, transparent), transparent)",

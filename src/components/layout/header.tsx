@@ -69,7 +69,7 @@ export function Header() {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
           ? "bg-black/70 backdrop-blur-md border-b border-white/10"
-          : "bg-gradient-to-b from-black/60 to-transparent"
+          : "bg-linear-to-b from-black/60 to-transparent"
       }`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-10 h-20 md:h-24 flex items-center justify-between gap-4">
@@ -90,7 +90,7 @@ export function Header() {
         {/* Logo — always visible */}
         <button
           onClick={() => goTo("/")}
-          className="flex-shrink-0 flex items-center justify-center"
+          className="shrink-0 flex items-center justify-center"
           aria-label="Go to home"
         >
           <div className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 rounded-full overflow-hidden ring-2 ring-accent/40 shadow-lg">
@@ -120,7 +120,7 @@ export function Header() {
           onClick={openWhatsApp}
           aria-label="Hire Me on WhatsApp"
           className="
-            flex-shrink-0
+            shrink-0
             px-3 py-1.5
             sm:px-4 sm:py-2
             text-[0.6rem] sm:text-[0.65rem]
@@ -144,7 +144,7 @@ export function Header() {
         {/* Mobile menu toggle */}
         <button
           aria-label={open ? "Close menu" : "Open menu"}
-          className="md:hidden flex-shrink-0 text-white p-1"
+          className="md:hidden shrink-0 text-white p-1"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X size={22} /> : <Menu size={22} />}

@@ -134,10 +134,10 @@ function Avatar({ initials, image, name }: { initials: string; image: string; na
           src={image}
           alt={name}
           onError={() => setImgError(true)}
-          className="absolute inset-[3px] rounded-full object-cover w-[calc(100%-6px)] h-[calc(100%-6px)]"
+          className="absolute inset-0.75 rounded-full object-cover w-[calc(100%-6px)] h-[calc(100%-6px)]"
         />
       ) : (
-        <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-gold/30 via-card to-secondary flex items-center justify-center">
+        <div className="absolute inset-0.75 rounded-full bg-linear-to-br from-gold/30 via-card to-secondary flex items-center justify-center">
           <span
             className="font-display text-xl text-gold-soft tracking-wide"
             aria-hidden="true"
@@ -263,7 +263,7 @@ export default function Testimonial() {
               className="absolute bottom-4 right-4 h-4 w-4 border-b border-r border-gold/60"
             />
 
-            <div className="relative px-6 py-7 sm:px-12 sm:py-9 md:px-20 md:py-10 min-h-[340px] sm:min-h-[300px] md:min-h-[320px] flex items-center">
+            <div className="relative px-6 py-7 sm:px-12 sm:py-9 md:px-20 md:py-10 min-h-85 sm:min-h-75 md:min-h-80 flex items-center">
               <AnimatePresence mode="wait" custom={direction}>
                 <motion.article
                   key={index}
