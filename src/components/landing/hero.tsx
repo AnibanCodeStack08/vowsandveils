@@ -152,21 +152,19 @@ function Hero() {
     <section
       ref={sectionRef}
       id="home"
-      className="relative w-full h-screen overflow-hidden bg-black"
+      className="relative w-full h-[100svh] overflow-hidden"
     >
       <video
         ref={videoRef}
         /*
-         * Mobile  (< md) → object-contain  : entire video visible, black bars
-         * Desktop (≥ md) → object-cover    : fills frame, minor edge crop
-         *
-         * absolute inset-0 + w-full h-full keep it locked to the section.
+         * Both mobile & desktop: object-cover fills the frame.
+         * On mobile the section is h-screen and the video covers it fully —
+         * same as desktop, no letterbox bars.
          */
         className="
           absolute inset-0
           w-full h-full
-          object-contain md:object-cover
-          object-center
+          object-cover object-center
         "
         src={video}
         loop

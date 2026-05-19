@@ -3,15 +3,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-const img1  = "/images/baby/img1.jpg";
-const img2  = "/images/baby/img2.jpg";
-const img3  = "/images/baby/img3.jpg";
-const img4  = "/images/baby/img4.jpg";
-const img5  = "/images/baby/img5.jpg";
-const img6  = "/images/baby/img6.jpg";
-const img7  = "/images/baby/img7.jpg";
-const img8  = "/images/baby/img8.jpg";
-const img9  = "/images/baby/img9.jpg";
+const img1 = "/images/baby/img1.jpg";
+const img2 = "/images/baby/img2.jpg";
+const img3 = "/images/baby/img3.jpg";
+const img4 = "/images/baby/img4.jpg";
+const img5 = "/images/baby/img5.jpg";
+const img6 = "/images/baby/img6.jpg";
+const img7 = "/images/baby/img7.jpg";
+const img8 = "/images/baby/img8.jpg";
+const img9 = "/images/baby/img9.jpg";
 const img10 = "/images/baby/img10.jpg";
 const img11 = "/images/baby/img11.jpg";
 const img12 = "/images/baby/img12.jpg";
@@ -40,15 +40,15 @@ export interface BabyImage {
 }
 
 const defaultImages: BabyImage[] = [
-  { src: img1,  alt: "Ten fingers, ten toes" },
-  { src: img2,  alt: "The first breath of morning" },
-  { src: img3,  alt: "Held against a heartbeat" },
-  { src: img4,  alt: "Wrapped in soft white cotton" },
-  { src: img5,  alt: "Eyes still learning the light" },
-  { src: img6,  alt: "Tiny fist, enormous love" },
-  { src: img7,  alt: "Father's hands, the whole world" },
-  { src: img8,  alt: "Mother's face — complete" },
-  { src: img9,  alt: "Asleep on a familiar chest" },
+  { src: img1, alt: "Ten fingers, ten toes" },
+  { src: img2, alt: "The first breath of morning" },
+  { src: img3, alt: "Held against a heartbeat" },
+  { src: img4, alt: "Wrapped in soft white cotton" },
+  { src: img5, alt: "Eyes still learning the light" },
+  { src: img6, alt: "Tiny fist, enormous love" },
+  { src: img7, alt: "Father's hands, the whole world" },
+  { src: img8, alt: "Mother's face — complete" },
+  { src: img9, alt: "Asleep on a familiar chest" },
   { src: img10, alt: "The first smile that wasn't wind" },
   { src: img11, alt: "Grandparents' eyes brimming over" },
   { src: img12, alt: "Nestled in the crook of an arm" },
@@ -73,19 +73,22 @@ const defaultImages: BabyImage[] = [
 ];
 
 interface BabyProps {
-  images?:      BabyImage[];
-  eyebrow?:     string;
-  title?:       string;
-  subtitle?:    string;
+  images?: BabyImage[];
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
   description?: string;
-  date?:        string;
-  location?:    string;
+  date?: string;
+  location?: string;
 }
 
-// ── Centred lozenge divider ───────────────────────────────────────────────────
 function LozengeDivider({ className }: { className?: string }) {
   return (
-    <div className={`flex items-center justify-center gap-3 w-full ${className ?? ""}`}>
+    <div
+      className={`flex items-center justify-center gap-3 w-full ${
+        className ?? ""
+      }`}
+    >
       <span
         className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
@@ -93,6 +96,7 @@ function LozengeDivider({ className }: { className?: string }) {
             "linear-gradient(to right, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
         }}
       />
+
       <svg viewBox="0 0 20 20" width="9" height="9" aria-hidden fill="none">
         <path
           d="M10 1 L19 10 L10 19 L1 10 Z"
@@ -104,6 +108,7 @@ function LozengeDivider({ className }: { className?: string }) {
           fill="color-mix(in oklab, var(--color-gold) 55%, transparent)"
         />
       </svg>
+
       <span
         className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
@@ -115,107 +120,208 @@ function LozengeDivider({ className }: { className?: string }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
 export default function Baby({
-  images      = defaultImages,
-  eyebrow     = "Baby Shoot",
-  title       = "Little One",
-  subtitle    = "The smallest hands held the biggest hearts.",
+  images = defaultImages,
+  eyebrow = "Baby Shoot",
+  title = "Little One",
+  subtitle = "The smallest hands held the biggest hearts.",
   description = "Every yawn, every blink, every quiet moment — framed before they grow too fast to catch.",
-  date        = "",
-  location    = "",
+  date = "",
+  location = "",
 }: BabyProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [colCount, setColCount]       = useState(4);
-  const [ratios, setRatios]           = useState<Record<string, number>>({});
+  const [colCount, setColCount] = useState(4);
+  const [ratios, setRatios] = useState<Record<string, number>>({});
   const ratiosReady = Object.keys(ratios).length === images.length;
 
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
 
-  // ── Responsive column count ─────────────────────────────────────────────
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      setColCount(w >= 1024 ? 4 : w >= 640 ? 3 : 2);
+      setColCount(w >= 1280 ? 5 : w >= 1024 ? 4 : w >= 640 ? 3 : 2);
     };
+
     compute();
+
     window.addEventListener("resize", compute);
+
     return () => window.removeEventListener("resize", compute);
   }, []);
 
-  // ── Measure all images ──────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
+
     const map: Record<string, number> = {};
     let pending = images.length;
+
     images.forEach((img) => {
       const el = new window.Image();
+
       const done = () => {
         if (cancelled) return;
+
         pending--;
-        if (pending === 0) setRatios({ ...map });
+
+        if (pending === 0) {
+          setRatios({ ...map });
+        }
       };
-      el.onload  = () => { map[img.src] = el.naturalHeight / el.naturalWidth; done(); };
-      el.onerror = () => { map[img.src] = 1.33; done(); };
+
+      el.onload = () => {
+        map[img.src] = el.naturalHeight / el.naturalWidth;
+        done();
+      };
+
+      el.onerror = () => {
+        map[img.src] = 1.33;
+        done();
+      };
+
       el.src = img.src;
     });
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [images]);
 
-  // ── Greedy bin-pack ─────────────────────────────────────────────────────
   const columns: number[][] = (() => {
-    if (!ratiosReady) return Array.from({ length: colCount }, () => [] as number[]);
+    if (!ratiosReady) {
+      return Array.from({ length: colCount }, () => [] as number[]);
+    }
+
     const cols: { items: number[]; h: number }[] = Array.from(
       { length: colCount },
-      () => ({ items: [], h: 0 }),
+      () => ({
+        items: [],
+        h: 0,
+      }),
     );
+
     images.forEach((img, idx) => {
       const r = ratios[img.src];
-      let t = 0;
-      for (let i = 1; i < cols.length; i++) if (cols[i].h < cols[t].h) t = i;
-      cols[t].items.push(idx);
-      cols[t].h += r;
+
+      let target = 0;
+
+      for (let i = 1; i < cols.length; i++) {
+        if (cols[i].h < cols[target].h) {
+          target = i;
+        }
+      }
+
+      cols[target].items.push(idx);
+      cols[target].h += r;
     });
+
     return cols.map((c) => c.items);
   })();
 
-  // ── GSAP heading entrance ───────────────────────────────────────────────
   useEffect(() => {
     if (!headingRef.current) return;
+
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.from(".by-top-rule", { scaleX: 0,  duration: 1.6, transformOrigin: "center" }, 0)
-        .from(".by-eyebrow",  { opacity: 0, y: -10, duration: 1 }, 0.15)
-        .from(".by-title",    { opacity: 0, y: 28,  duration: 1.4 }, 0.28)
-        .from(".by-subtitle", { opacity: 0, y: 14,  duration: 1.1 }, 0.5)
-        .from(".by-bot-rule", { scaleX: 0,  duration: 1.4, transformOrigin: "center" }, 0.55)
-        .from(".by-desc",     { opacity: 0, y: 10,  duration: 1 }, 0.7)
-        .from(".by-meta",     { opacity: 0,          duration: 0.9 }, 0.85);
+      const tl = gsap.timeline({
+        defaults: {
+          ease: "expo.out",
+        },
+      });
+
+      tl.from(
+        ".by-top-rule",
+        {
+          scaleX: 0,
+          duration: 1.6,
+          transformOrigin: "center",
+        },
+        0,
+      )
+        .from(
+          ".by-eyebrow",
+          {
+            opacity: 0,
+            y: -10,
+            duration: 1,
+          },
+          0.15,
+        )
+        .from(
+          ".by-title",
+          {
+            opacity: 0,
+            y: 28,
+            duration: 1.4,
+          },
+          0.28,
+        )
+        .from(
+          ".by-subtitle",
+          {
+            opacity: 0,
+            y: 14,
+            duration: 1.1,
+          },
+          0.5,
+        )
+        .from(
+          ".by-bot-rule",
+          {
+            scaleX: 0,
+            duration: 1.4,
+            transformOrigin: "center",
+          },
+          0.55,
+        )
+        .from(
+          ".by-desc",
+          {
+            opacity: 0,
+            y: 10,
+            duration: 1,
+          },
+          0.7,
+        )
+        .from(
+          ".by-meta",
+          {
+            opacity: 0,
+            duration: 0.9,
+          },
+          0.85,
+        );
     }, headingRef);
+
     return () => ctx.revert();
   }, []);
 
-  // ── Lightbox controls ───────────────────────────────────────────────────
   const close = useCallback(() => setActiveIndex(null), []);
-  const next  = useCallback(
-    () => setActiveIndex((i) => (i === null ? i : (i + 1) % images.length)),
-    [images.length],
-  );
-  const prev  = useCallback(
-    () => setActiveIndex((i) => (i === null ? i : (i - 1 + images.length) % images.length)),
-    [images.length],
-  );
+
+  const next = useCallback(() => {
+    setActiveIndex((i) =>
+      i === null ? i : (i + 1) % images.length,
+    );
+  }, [images.length]);
+
+  const prev = useCallback(() => {
+    setActiveIndex((i) =>
+      i === null ? i : (i - 1 + images.length) % images.length,
+    );
+  }, [images.length]);
 
   useEffect(() => {
     if (activeIndex === null) return;
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape")     close();
+      if (e.key === "Escape") close();
       if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft")  prev();
+      if (e.key === "ArrowLeft") prev();
     };
+
     window.addEventListener("keydown", onKey);
+
     document.body.style.overflow = "hidden";
+
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
@@ -228,9 +334,7 @@ export default function Baby({
       id="baby"
       className="relative w-full overflow-hidden bg-background py-24 sm:py-32 lg:py-40"
     >
-      {/* ── Backgrounds ──────────────────────────────────────────────────── */}
-
-      {/* Wide centred glow */}
+      {/* Background Glow */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-160"
@@ -240,21 +344,27 @@ export default function Baby({
         }}
       />
 
-      {/* Faint concentric rings — centred, purely decorative */}
+      {/* Decorative Rings */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.045]"
-        style={{ width: "min(900px, 110vw)", aspectRatio: "1" }}
+        style={{
+          width: "min(900px, 110vw)",
+          aspectRatio: "1",
+        }}
       >
         {[1, 0.75, 0.55, 0.38].map((scale, i) => (
           <span
             key={i}
             className="absolute rounded-full"
             style={{
-              border: "1px solid color-mix(in oklab, var(--color-gold) 100%, transparent)",
+              border:
+                "1px solid color-mix(in oklab, var(--color-gold) 100%, transparent)",
               transform: `scale(${scale})`,
-              top: "50%", left: "50%",
-              width: "100%", height: "100%",
+              top: "50%",
+              left: "50%",
+              width: "100%",
+              height: "100%",
               translate: "-50% -50%",
               position: "absolute",
             }}
@@ -262,7 +372,7 @@ export default function Baby({
         ))}
       </div>
 
-      {/* Dot grid */}
+      {/* Dot Grid */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.028] mix-blend-screen"
@@ -273,25 +383,24 @@ export default function Baby({
         }}
       />
 
-      <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
-
-        {/* ── HEADER — centred ─────────────────────────────────────────────── */}
+      <div className="relative mx-auto max-w-[1900px] px-3 sm:px-6 lg:px-8">
+        {/* Header */}
         <div
           ref={headingRef}
           className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
         >
-          {/* Top lozenge rule */}
           <LozengeDivider className="by-top-rule max-w-2xl" />
 
-          {/* Eyebrow */}
           <p
             className="by-eyebrow tracking-[0.42em] uppercase text-[10px] sm:text-xs mt-2"
-            style={{ color: "color-mix(in oklab, var(--color-gold) 72%, transparent)" }}
+            style={{
+              color:
+                "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+            }}
           >
             {eyebrow}
           </p>
 
-          {/* Main title */}
           <h2
             className="by-title font-display leading-[0.95]"
             style={{
@@ -304,80 +413,108 @@ export default function Baby({
             {title}
           </h2>
 
-          {/* Subtitle */}
           <p
             className="by-subtitle font-display italic"
             style={{
               fontSize: "clamp(1rem, 2.2vw, 1.6rem)",
               fontWeight: 300,
               letterSpacing: "0.01em",
-              color: "color-mix(in oklab, var(--color-foreground) 55%, transparent)",
+              color:
+                "color-mix(in oklab, var(--color-foreground) 55%, transparent)",
               maxWidth: "44ch",
             }}
           >
             {subtitle}
           </p>
 
-          {/* Bottom lozenge rule */}
           <LozengeDivider className="by-bot-rule max-w-xs opacity-60 mt-1" />
 
-          {/* Description */}
           <p
             className="by-desc text-sm sm:text-base leading-relaxed"
             style={{
-              color: "color-mix(in oklab, var(--color-foreground) 42%, transparent)",
+              color:
+                "color-mix(in oklab, var(--color-foreground) 42%, transparent)",
               maxWidth: "52ch",
             }}
           >
             {description}
           </p>
 
-          {/* Meta row */}
           <div className="by-meta flex items-center justify-center gap-4 flex-wrap">
             {date && (
               <span
                 className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
-                style={{ color: "color-mix(in oklab, var(--color-gold) 62%, transparent)" }}
+                style={{
+                  color:
+                    "color-mix(in oklab, var(--color-gold) 62%, transparent)",
+                }}
               >
                 {date}
               </span>
             )}
+
             {date && location && (
-              <span aria-hidden style={{ color: "color-mix(in oklab, var(--color-gold) 28%, transparent)" }}>·</span>
+              <span
+                aria-hidden
+                style={{
+                  color:
+                    "color-mix(in oklab, var(--color-gold) 28%, transparent)",
+                }}
+              >
+                ·
+              </span>
             )}
+
             {location && (
               <span
                 className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
-                style={{ color: "color-mix(in oklab, var(--color-gold) 62%, transparent)" }}
+                style={{
+                  color:
+                    "color-mix(in oklab, var(--color-gold) 62%, transparent)",
+                }}
               >
                 {location}
               </span>
             )}
+
             {(date || location) && (
-              <span aria-hidden style={{ color: "color-mix(in oklab, var(--color-gold) 28%, transparent)" }}>·</span>
+              <span
+                aria-hidden
+                style={{
+                  color:
+                    "color-mix(in oklab, var(--color-gold) 28%, transparent)",
+                }}
+              >
+                ·
+              </span>
             )}
+
             <span
               className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
-              style={{ color: "color-mix(in oklab, var(--color-foreground) 28%, transparent)" }}
+              style={{
+                color:
+                  "color-mix(in oklab, var(--color-foreground) 28%, transparent)",
+              }}
             >
               {String(images.length).padStart(2, "0")} frames
             </span>
           </div>
         </div>
 
-        {/* ── MASONRY GRID ─────────────────────────────────────────────────── */}
+        {/* Masonry Grid */}
         <div
-          className="grid items-stretch gap-0.75"
-          style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+          className="grid items-start gap-1 sm:gap-1.5"
+          style={{
+            gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
+          }}
         >
           {columns.map((colIndices, ci) => (
-            <div key={ci} className="flex h-full flex-col gap-0.75">
-              {colIndices.map((globalIndex, position) => (
+            <div key={ci} className="flex flex-col gap-1 sm:gap-1.5">
+              {colIndices.map((globalIndex) => (
                 <Tile
                   key={images[globalIndex].src + globalIndex}
                   image={images[globalIndex]}
                   index={globalIndex}
-                  isLast={position === colIndices.length - 1}
                   onClick={() => setActiveIndex(globalIndex)}
                 />
               ))}
@@ -385,18 +522,17 @@ export default function Baby({
           ))}
         </div>
 
-        {/* Preload all images */}
+        {/* Preload Images */}
         <div aria-hidden className="sr-only absolute w-0 h-0 overflow-hidden">
           {images.map((img, i) => (
             <img key={i} src={img.src} alt="" />
           ))}
         </div>
 
-        {/* Bottom lozenge rule */}
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
       </div>
 
-      {/* ── LIGHTBOX ─────────────────────────────────────────────────────────── */}
+      {/* Lightbox */}
       <AnimatePresence>
         {activeIndex !== null && (
           <motion.div
@@ -404,13 +540,19 @@ export default function Baby({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              duration: 0.3,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/96 backdrop-blur-lg"
             onClick={close}
           >
             {/* Close */}
             <button
-              onClick={(e) => { e.stopPropagation(); close(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                close();
+              }}
               className="absolute top-5 right-5 z-10 p-2 text-foreground/45 transition-colors hover:text-foreground"
               aria-label="Close"
             >
@@ -420,12 +562,18 @@ export default function Baby({
             {/* Counter */}
             <div
               className="absolute top-6 left-1/2 -translate-x-1/2 tracking-[0.35em] text-xs uppercase select-none"
-              style={{ color: "color-mix(in oklab, var(--color-foreground) 38%, transparent)" }}
+              style={{
+                color:
+                  "color-mix(in oklab, var(--color-foreground) 38%, transparent)",
+              }}
             >
               {String(activeIndex + 1).padStart(2, "0")}
               <span
                 className="mx-2"
-                style={{ color: "color-mix(in oklab, var(--color-foreground) 16%, transparent)" }}
+                style={{
+                  color:
+                    "color-mix(in oklab, var(--color-foreground) 16%, transparent)",
+                }}
               >
                 /
               </span>
@@ -434,14 +582,17 @@ export default function Baby({
 
             {/* Prev */}
             <button
-              onClick={(e) => { e.stopPropagation(); prev(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                prev();
+              }}
               className="absolute left-3 sm:left-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
               aria-label="Previous"
             >
               <ChevronLeft size={26} />
             </button>
 
-            {/* Image + caption */}
+            {/* Image */}
             <div
               className="relative max-h-[80vh] max-w-[88vw] sm:max-w-[76vw] flex flex-col items-center gap-5"
               onClick={(e) => e.stopPropagation()}
@@ -451,12 +602,30 @@ export default function Baby({
                   key={images[activeIndex].src}
                   src={images[activeIndex].src}
                   alt={images[activeIndex].alt}
-                  initial={{ opacity: 0, scale: 0.97, y: 10 }}
-                  animate={{ opacity: 1, scale: 1,    y: 0 }}
-                  exit={{    opacity: 0, scale: 0.97, y: -10 }}
-                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                  className="max-h-[74vh] max-w-full object-contain"
-                  style={{ boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)" }}
+                  initial={{
+                    opacity: 0,
+                    scale: 0.97,
+                    y: 10,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.97,
+                    y: -10,
+                  }}
+                  transition={{
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="max-h-[74vh] max-w-full object-contain rounded-sm"
+                  style={{
+                    boxShadow:
+                      "0 40px 100px -20px rgba(0,0,0,0.65)",
+                  }}
                   draggable={false}
                 />
               </AnimatePresence>
@@ -465,12 +634,27 @@ export default function Baby({
               <AnimatePresence mode="wait">
                 <motion.p
                   key={images[activeIndex].alt}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{    opacity: 0, y: -5 }}
-                  transition={{ duration: 0.35, delay: 0.1 }}
+                  initial={{
+                    opacity: 0,
+                    y: 5,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -5,
+                  }}
+                  transition={{
+                    duration: 0.35,
+                    delay: 0.1,
+                  }}
                   className="italic text-xs sm:text-sm text-center"
-                  style={{ color: "color-mix(in oklab, var(--color-foreground) 36%, transparent)" }}
+                  style={{
+                    color:
+                      "color-mix(in oklab, var(--color-foreground) 36%, transparent)",
+                  }}
                 >
                   {images[activeIndex].alt}
                 </motion.p>
@@ -479,7 +663,10 @@ export default function Baby({
 
             {/* Next */}
             <button
-              onClick={(e) => { e.stopPropagation(); next(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                next();
+              }}
               className="absolute right-3 sm:right-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
               aria-label="Next"
             >
@@ -492,60 +679,74 @@ export default function Baby({
   );
 }
 
-// ── Tile ──────────────────────────────────────────────────────────────────────
 interface TileProps {
-  image:   BabyImage;
-  index:   number;
-  isLast?: boolean;
+  image: BabyImage;
+  index: number;
   onClick: () => void;
 }
 
-function Tile({ image, index, isLast = false, onClick }: TileProps) {
-  const isLastCls = isLast ? " flex-1 flex flex-col" : "";
-  const imgCls    = isLast
-    ? "block w-full flex-1 h-0 min-h-0 object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]"
-    : "block h-auto w-full object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]";
-
+function Tile({ image, index, onClick }: TileProps) {
   return (
     <motion.button
       type="button"
       onClick={onClick}
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: (index % 4) * 0.06 }}
-      className={`group relative block w-full overflow-hidden bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-gold hover:z-10${isLastCls}`}
+      initial={{
+        opacity: 0,
+        y: 22,
+      }}
+      whileInView={{
+        opacity: 1,
+        y: 0,
+      }}
+      viewport={{
+        once: true,
+        margin: "-50px",
+      }}
+      transition={{
+        duration: 0.95,
+        ease: [0.22, 1, 0.36, 1],
+        delay: (index % 5) * 0.05,
+      }}
+      className="group relative block w-full overflow-hidden bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
       aria-label={`Open photo: ${image.alt}`}
     >
-      {/* Photo */}
-      <img
-        src={image.src}
-        alt={image.alt}
-        loading="lazy"
-        decoding="async"
-        className={imgCls}
-      />
+      {/* Image */}
+      <div className="overflow-hidden">
+        <img
+          src={image.src}
+          alt={image.alt}
+          loading="lazy"
+          decoding="async"
+          className="block h-auto w-full object-cover transition-all duration-[1400ms] ease-out will-change-transform group-hover:scale-[1.04] group-hover:brightness-[1.04]"
+        />
+      </div>
 
-      {/* Inner glow on hover */}
+      {/* Overlay */}
       <div
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
-        style={{ boxShadow: "inset 0 0 55px color-mix(in oklab, var(--color-gold) 25%, transparent)" }}
+        style={{
+          boxShadow:
+            "inset 0 0 55px color-mix(in oklab, var(--color-gold) 25%, transparent)",
+        }}
       />
 
-      {/* Caption slide-up */}
+      {/* Caption */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-480 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
+        className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
         style={{
           background:
-            "linear-gradient(to top, color-mix(in oklab, var(--color-background) 82%, transparent), transparent)",
-          paddingTop: "2.5rem",
-          paddingBottom: "0.75rem",
-          paddingInline: "0.875rem",
+            "linear-gradient(to top, color-mix(in oklab, var(--color-background) 88%, transparent), transparent)",
+          paddingTop: "3rem",
+          paddingBottom: "0.85rem",
+          paddingInline: "0.95rem",
         }}
       >
         <p
           className="text-xs italic leading-snug"
-          style={{ color: "color-mix(in oklab, var(--color-foreground) 65%, transparent)" }}
+          style={{
+            color:
+              "color-mix(in oklab, var(--color-foreground) 70%, transparent)",
+          }}
         >
           {image.alt}
         </p>

@@ -125,15 +125,11 @@ const Flimreel = () => {
       {/* Fixed, centered video layer */}
       <div
         aria-hidden={!inView}
-        className="fixed inset-0 -z-10 pointer-events-none overflow-hidden bg-black"
+        className="fixed inset-0 -z-10 pointer-events-none overflow-hidden"
       >
         <video
           ref={videoRef}
-          /*
-           * Mobile  (< md) → object-contain : full video visible, black bars
-           * Desktop (≥ md) → object-cover   : fills frame, minor edge crop
-           */
-          className="h-full w-full object-contain md:object-cover object-center"
+          className="h-full w-full object-cover object-center"
           src={flimreelVideo}
           muted
           loop
