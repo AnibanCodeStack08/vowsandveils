@@ -167,7 +167,7 @@ function Hero() {
           #home.hero-section {
             position: relative;
             width: 100%;
-            height: 42vh;
+            height: 29vh;
             background: #000;
             overflow: hidden;
 
