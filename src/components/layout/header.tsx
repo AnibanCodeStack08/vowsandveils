@@ -22,7 +22,6 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -36,32 +35,33 @@ export function Header() {
   const goTo = (href: string) => {
     setOpen(false);
 
-    /* Route Navigation */
-    if (href.startsWith("/")) {
+    /* Route navigation — starts with "/" but is NOT just "/" with a hash */
+    if (href.startsWith("/") && !href.startsWith("/#")) {
       navigate(href);
+      window.scrollTo({ top: 0, behavior: "instant" });
       return;
     }
 
-    /* Section Scroll */
+    /* Section scroll (hash links) */
     const scrollToSection = () => {
-      const id = href.replace("#", "");
+      const id = href.replace("#", "").replace("/#", "");
       const el = document.getElementById(id);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     };
 
-    /* If not on homepage, go home first */
+    /* If not on homepage, navigate home first, then scroll */
     if (location.pathname !== "/") {
       navigate("/");
-      setTimeout(() => scrollToSection(), 100);
+      setTimeout(() => scrollToSection(), 300);
     } else {
       scrollToSection();
     }
   };
 
   const openWhatsApp = () => {
-    window.open("https://wa.me/8670696443", "_blank", "noopener,noreferrer");
+    window.open("https://wa.me/919867069643", "_blank", "noopener,noreferrer");
   };
 
   return (

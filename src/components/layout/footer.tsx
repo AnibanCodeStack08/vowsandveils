@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 
 function InstagramIcon({ className }: { className?: string }) {
@@ -10,7 +11,6 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-// Simple Facebook icon
 function FacebookIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -19,18 +19,8 @@ function FacebookIcon({ className }: { className?: string }) {
   );
 }
 
-const WhatsAppIcon = ({
-  className,
-}: {
-  className?: string;
-  strokeWidth?: number;
-}) => (
-  <svg
-    viewBox="0 0 32 32"
-    fill="currentColor"
-    className={className}
-    aria-hidden="true"
-  >
+const WhatsAppIcon = ({ className }: { className?: string; strokeWidth?: number }) => (
+  <svg viewBox="0 0 32 32" fill="currentColor" className={className} aria-hidden="true">
     <path d="M16.001 3C8.82 3 3 8.82 3 16c0 2.29.6 4.52 1.74 6.49L3 29l6.7-1.75A12.93 12.93 0 0 0 16 29c7.18 0 13-5.82 13-13S23.18 3 16.001 3Zm0 23.6c-1.99 0-3.93-.53-5.62-1.54l-.4-.24-3.98 1.04 1.06-3.88-.26-.4A10.55 10.55 0 0 1 5.4 16C5.4 10.15 10.15 5.4 16 5.4S26.6 10.15 26.6 16 21.85 26.6 16.001 26.6Zm5.82-7.93c-.32-.16-1.88-.93-2.17-1.03-.29-.11-.5-.16-.71.16-.21.32-.81 1.03-1 1.24-.18.21-.37.24-.69.08-.32-.16-1.34-.5-2.55-1.58-.94-.84-1.57-1.87-1.76-2.19-.18-.32-.02-.5.14-.66.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.61-.52-.53-.71-.54l-.6-.01c-.21 0-.55.08-.84.4s-1.1 1.08-1.1 2.63 1.13 3.05 1.29 3.26c.16.21 2.22 3.39 5.39 4.75.75.32 1.34.51 1.8.66.76.24 1.45.21 2 .13.61-.09 1.88-.77 2.15-1.51.26-.74.26-1.37.18-1.51-.08-.13-.29-.21-.61-.37Z" />
   </svg>
 );
@@ -47,9 +37,8 @@ const SOCIAL_LINKS: SocialLink[] = [
   {
     name: "Instagram",
     href: "https://www.instagram.com/vowsandveils.in?igsh=MXU5cGNvNm5jMGR5cA%3D%3D",
-    Icon:   InstagramIcon,
-    gradient:
-      "linear-gradient(135deg, #f9ce34 0%, #ee2a7b 45%, #6228d7 100%)",
+    Icon: InstagramIcon,
+    gradient: "linear-gradient(135deg, #f9ce34 0%, #ee2a7b 45%, #6228d7 100%)",
     hoverGlow: "0 0 32px rgba(238, 42, 123, 0.55)",
   },
   {
@@ -68,10 +57,10 @@ const SOCIAL_LINKS: SocialLink[] = [
   },
 ];
 
+// ✅ These hrefs now match the actual routes defined in Router.tsx
 const NAV_LINKS = [
-  { label: "Work", href: "/work" },
-  { label: "About", href: "/about" },
-  { label: "Team", href: "/team" },
+  { label: "Videos", href: "/videos" },
+  { label: "Team & About", href: "/team-about" },
   { label: "Contact", href: "/contact" },
 ] as const;
 
@@ -79,6 +68,7 @@ export default function Footer() {
   const rootRef = useRef<HTMLElement | null>(null);
   const lineRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(rootRef, { once: true, margin: "-80px" });
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isInView || !lineRef.current) return;
@@ -91,6 +81,11 @@ export default function Footer() {
     }, rootRef);
     return () => ctx.revert();
   }, [isInView]);
+
+  const handleNavClick = (href: string) => {
+    navigate(href);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
 
   return (
     <motion.footer
@@ -109,6 +104,7 @@ export default function Footer() {
 
       <div className="mx-auto max-w-7xl px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-16">
+
           {/* Brand & Contact */}
           <div className="flex flex-col gap-6">
             <span className="hairline text-gold">Studio</span>
@@ -128,19 +124,19 @@ export default function Footer() {
             </a>
           </div>
 
-          {/* Navigation */}
+          {/* Navigation — uses useNavigate, no full page reload */}
           <nav aria-label="Footer navigation" className="flex flex-col gap-6">
             <span className="hairline text-gold">Explore</span>
             <ul className="flex flex-col gap-4">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
-                  <a
-                    href={link.href}
+                  <button
+                    onClick={() => handleNavClick(link.href)}
                     className="group relative inline-flex items-center text-base text-foreground/90 transition-colors hover:text-gold"
                   >
                     <span className="mr-3 h-px w-4 bg-border transition-all duration-500 group-hover:w-8 group-hover:bg-gold" />
                     {link.label}
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -158,21 +154,13 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     aria-label={social.name}
                     initial={{ opacity: 0, y: 16, scale: 0.85 }}
-                    animate={
-                      isInView
-                        ? { opacity: 1, y: 0, scale: 1 }
-                        : {}
-                    }
+                    animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
                     transition={{
                       duration: 0.7,
                       delay: 0.3 + i * 0.12,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    whileHover={{
-                      y: -4,
-                      scale: 1.08,
-                      boxShadow: social.hoverGlow,
-                    }}
+                    whileHover={{ y: -4, scale: 1.08, boxShadow: social.hoverGlow }}
                     whileTap={{ scale: 0.95 }}
                     style={{ background: social.gradient }}
                     className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full text-white shadow-lg shadow-black/40 transition-shadow"
