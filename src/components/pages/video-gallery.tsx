@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { VIDEOS, type VideoItem } from "./../data/videos.ts";
+import { useEffect, useState, useCallback } from "react";
+import { GALLERY_VIDEOS, type VideoItem } from "./../data/videos.ts"; // ← changed
 import LiteYouTube from "./youtube.tsx";
+
 interface VideoCardProps {
   video: VideoItem;
   index: number;
+  isPlaying: boolean;
+  onPlay: (id: string) => void;
 }
 
-function VideoCard({ video, index }: VideoCardProps) {
+function VideoCard({ video, index, isPlaying, onPlay }: VideoCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 40, scale: 0.97 }}
@@ -20,9 +23,17 @@ function VideoCard({ video, index }: VideoCardProps) {
       }}
       className="group relative overflow-hidden rounded-md border border-border bg-card transition-all duration-500 hover:border-gold hover:shadow-[0_0_40px_-12px_var(--color-gold)]"
     >
-      <div className="relative aspect-video w-full overflow-hidden">
-        <LiteYouTube id={video.id} title={video.title} />
+      <div
+        className="relative aspect-video w-full overflow-hidden"
+        onClick={() => onPlay(video.id)}
+      >
+        <LiteYouTube
+          key={isPlaying ? video.id : `${video.id}--idle`}
+          id={video.id}
+          title={video.title}
+        />
       </div>
+
       <div className="flex items-center justify-between px-5 py-4">
         <span className="hairline text-muted-foreground">
           {String(index + 1).padStart(2, "0")}
@@ -37,8 +48,12 @@ function VideoCard({ video, index }: VideoCardProps) {
 
 export default function VideoGallery() {
   const navigate = useNavigate();
+  const [playingId, setPlayingId] = useState<string | null>(null);
 
-  // Scroll to top when gallery mounts
+  const handlePlay = useCallback((id: string) => {
+    setPlayingId(id);
+  }, []);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
@@ -74,8 +89,14 @@ export default function VideoGallery() {
         </motion.div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-          {VIDEOS.map((video, i) => (
-            <VideoCard key={`${video.id}-${i}`} video={video} index={i} />
+          {GALLERY_VIDEOS.map((video, i) => ( // ← changed
+            <VideoCard
+              key={`${video.id}-${i}`}
+              video={video}
+              index={i}
+              isPlaying={playingId === video.id}
+              onPlay={handlePlay}
+            />
           ))}
         </div>
       </div>

@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useState, useCallback } from "react";
 import { VIDEOS, type VideoItem } from "../data/videos.ts";
 import LiteYouTube from "../pages/youtube.tsx";
 
 interface VideoCardProps {
   video: VideoItem;
   index: number;
+  isPlaying: boolean;
+  onPlay: (id: string) => void;
 }
 
-function VideoCard({ video, index }: VideoCardProps) {
+function VideoCard({ video, index, isPlaying, onPlay }: VideoCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 32 }}
@@ -17,9 +20,28 @@ function VideoCard({ video, index }: VideoCardProps) {
       transition={{ duration: 0.7, delay: index * 0.12, ease: [0.22, 1, 0.36, 1] }}
       className="group relative overflow-hidden rounded-md border border-border bg-card transition-all duration-500 hover:border-gold"
     >
-      <div className="relative aspect-video w-full overflow-hidden">
-        <LiteYouTube id={video.id} title={video.title} />
+      {/*
+        Click interceptor: fires before LiteYouTube's own handler so
+        playingId updates synchronously — any previously playing card
+        gets a new key and remounts (stops) before the new one plays.
+      */}
+      <div
+        className="relative aspect-video w-full overflow-hidden"
+        onClick={() => onPlay(video.id)}
+      >
+        {/*
+          Key trick: while this card is the active one its key stays
+          stable so the iframe persists. The moment another card is
+          clicked, isPlaying → false, the key changes, LiteYouTube
+          unmounts/remounts back to its thumbnail state (video stops).
+        */}
+        <LiteYouTube
+          key={isPlaying ? video.id : `${video.id}--idle`}
+          id={video.id}
+          title={video.title}
+        />
       </div>
+
       <div className="flex items-center justify-between px-5 py-4">
         <span className="hairline text-muted-foreground">Film</span>
         <h3 className="font-display text-lg text-foreground transition-colors group-hover:text-gold">
@@ -32,6 +54,16 @@ function VideoCard({ video, index }: VideoCardProps) {
 
 export default function Video() {
   const navigate = useNavigate();
+
+  // Single source of truth: which video ID (if any) is currently playing.
+  const [playingId, setPlayingId] = useState<string | null>(null);
+
+  // useCallback keeps the reference stable across re-renders so VideoCard
+  // props don't cause unnecessary motion re-animations.
+  const handlePlay = useCallback((id: string) => {
+    setPlayingId(id);
+  }, []);
+
   const featured = VIDEOS.slice(0, 4);
 
   const handleViewAll = () => {
@@ -58,7 +90,13 @@ export default function Video() {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {featured.map((video, i) => (
-            <VideoCard key={`${video.id}-${i}`} video={video} index={i} />
+            <VideoCard
+              key={`${video.id}-${i}`}
+              video={video}
+              index={i}
+              isPlaying={playingId === video.id}
+              onPlay={handlePlay}
+            />
           ))}
         </div>
 

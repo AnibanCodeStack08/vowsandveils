@@ -112,30 +112,31 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Get In Touch button — always visible on desktop */}
+        {/* Get In Touch button — desktop only */}
         <button
           onClick={openWhatsApp}
           aria-label="Get In Touch on WhatsApp"
           style={{
             border: "1px solid rgba(120,66,2,0.75)",
-            color: "rgb(200,130,60)",
+            color: "rgb(255,255,255)",
             background: "rgba(120,66,2,0.12)",
           }}
           onMouseEnter={(e) => {
             const el = e.currentTarget;
             el.style.background = "rgba(120,66,2,0.28)";
             el.style.borderColor = "rgba(120,66,2,1)";
-            el.style.color = "rgb(230,160,80)";
+            el.style.color = "rgb(255,255,255)";
             el.style.boxShadow = "0 0 16px rgba(120,66,2,0.45)";
           }}
           onMouseLeave={(e) => {
             const el = e.currentTarget;
             el.style.background = "rgba(120,66,2,0.12)";
             el.style.borderColor = "rgba(120,66,2,0.75)";
-            el.style.color = "rgb(200,130,60)";
+            el.style.color = "rgb(255,255,255)";
             el.style.boxShadow = "none";
           }}
           className="
+            hidden md:flex
             shrink-0
             px-3 py-1.5
             sm:px-4 sm:py-2
@@ -182,7 +183,7 @@ export function Header() {
               }}
               style={{
                 border: "1px solid rgba(120,66,2,0.75)",
-                color: "rgb(200,130,60)",
+                color: "rgb(255,255,255)",
                 background: "rgba(120,66,2,0.12)",
               }}
               className="

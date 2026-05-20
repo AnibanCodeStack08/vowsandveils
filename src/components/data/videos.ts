@@ -3,7 +3,16 @@ export interface VideoItem {
   title: string;
 }
 
+// Used by video.tsx (homepage section)
 export const VIDEOS: VideoItem[] = [
+  { id: "47BlYNv9hxI", title: "Featured Film 01" },
+  { id: "lB8IUS79qxo", title: "Featured Film 02" },
+  { id: "9ODOJXe7QnE", title: "Featured Film 03" },
+  { id: "8fAOvHMAAPo", title: "Featured Film 04" },
+];
+
+// Used by video-gallery.tsx (full archive page)
+export const GALLERY_VIDEOS: VideoItem[] = [
   { id: "8yjuPb_CbmI", title: "Featured Film 01" },
   { id: "MV5pVy88sX8", title: "Featured Film 02" },
   { id: "lrTLWOaRmyU", title: "Featured Film 03" },

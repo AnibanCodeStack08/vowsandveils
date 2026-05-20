@@ -109,7 +109,7 @@ export default function Footer() {
           <div className="flex flex-col gap-6">
             <span className="hairline text-gold">Studio</span>
             <h3 className="font-display text-4xl text-foreground sm:text-5xl">
-              Vows<span className="text-gold">&</span>Veils
+              Vows<span className="text-gold"> & </span>Veils
             </h3>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
               Timeless wedding photography crafted with quiet intention and an
@@ -186,7 +186,7 @@ export default function Footer() {
 
         {/* Bottom strip */}
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} Vows&Veils. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Vows & Veils. All rights reserved.</p>
           <p className="hairline text-gold-soft">Crafted with devotion</p>
         </div>
       </div>
