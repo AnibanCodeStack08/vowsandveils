@@ -7,9 +7,9 @@ import React, {
   useCallback,
   memo,
 } from "react";
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ArrowUpRight, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // ---- Lazy GSAP (avoids blocking first paint) ----
 let gsapLoaded = false;
@@ -97,7 +97,7 @@ const CATEGORIES: Category[] = [
 const pad = (n: number) => String(n + 1).padStart(2, "0");
 
 // =========================================================================
-// Lazy image with IntersectionObserver — only loads when near viewport
+// Lazy image with IntersectionObserver
 // =========================================================================
 const LazyImage = memo(
   ({
@@ -117,7 +117,7 @@ const LazyImage = memo(
     const [loaded, setLoaded] = useState(eager ?? false);
 
     useEffect(() => {
-      if (eager) return; // browser handles it via loading="eager"
+      if (eager) return;
       const el = imgRef.current;
       if (!el) return;
       const obs = new IntersectionObserver(
@@ -154,12 +154,16 @@ const LazyImage = memo(
 );
 
 // =========================================================================
-// Mobile Accordion — NO overlap, each card expands in place
+// Mobile Accordion
+// FIX 1: Toggle close — clicking open header sets index to -1
+// FIX 2: Full expanded area is a clickable navigate zone
 // =========================================================================
 const MobileAccordion: React.FC<{
   index: number;
   setIndex: (i: number) => void;
 }> = ({ index, setIndex }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="md:hidden mt-6 flex flex-col gap-2">
       {CATEGORIES.map((c, i) => {
@@ -168,13 +172,13 @@ const MobileAccordion: React.FC<{
         return (
           <div
             key={c.name}
-            className="relative overflow-hidden rounded-sm ring-1 ring-accent/20 bg-card"
+            className="relative rounded-sm ring-1 ring-accent/20 bg-card overflow-hidden"
           >
-            {/* ---- Collapsed header (always visible) ---- */}
+            {/* ---- Header — always visible, toggles open/close ---- */}
             <button
-              onClick={() => setIndex(i)}
+              onClick={() => setIndex(isActive ? -1 : i)}  // ← FIX: toggle close
               aria-expanded={isActive}
-              aria-label={`Open ${c.name}`}
+              aria-label={isActive ? `Close ${c.name}` : `Open ${c.name}`}
               className="relative w-full flex items-center justify-between px-4 py-3 z-10"
             >
               {/* Accent left rule */}
@@ -197,16 +201,16 @@ const MobileAccordion: React.FC<{
                 </span>
               </div>
 
+              {/* FIX: show X when open, Plus when closed */}
               <motion.span
-                animate={{ rotate: isActive ? 45 : 0 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                className="text-accent"
+                animate={{ rotate: isActive ? 0 : 0 }}
+                className="text-accent flex-shrink-0"
               >
-                <Plus size={16} />
+                {isActive ? <X size={16} /> : <Plus size={16} />}
               </motion.span>
             </button>
 
-            {/* ---- Expandable content — uses height animation, NO absolute positioning ---- */}
+            {/* ---- Expandable body — clicking anywhere navigates ---- */}
             <AnimatePresence initial={false}>
               {isActive && (
                 <motion.div
@@ -217,57 +221,77 @@ const MobileAccordion: React.FC<{
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   style={{ overflow: "hidden" }}
                 >
-                  {/* Image */}
+                  {/*
+                    FIX 3: entire expanded card is one big click zone that navigates.
+                    Use a <div role="button"> wrapping everything so the tap target
+                    is the full card body, not just a small CTA link.
+                  */}
                   <div
-                    className="relative w-full"
-                    style={{ height: "min(56vw, 320px)" }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Go to ${c.name} gallery`}
+                    onClick={() => navigate(c.to)}
+                    onKeyDown={(e) => e.key === "Enter" && navigate(c.to)}
+                    className="cursor-pointer select-none"
                   >
-                    <LazyImage
-                      src={c.image}
-                      alt={c.name}
-                      eager={i === 0}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    {/* Gradient scrim */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
-                  </div>
-
-                  {/* Text content */}
-                  <motion.div
-                    initial={{ y: 12, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.4, delay: 0.15 }}
-                    className="px-4 pb-5 pt-3"
-                  >
-                    <span className="hairline text-accent text-[10px] tracking-[0.18em] uppercase block mb-1">
-                      Vol {pad(i)} · {c.tagline}
-                    </span>
-
-                    <motion.div
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ transformOrigin: "left center" }}
-                      className="h-px w-12 bg-accent my-2.5"
-                    />
-
-                    <p className="text-foreground/75 text-sm leading-relaxed mb-4">
-                      {c.description}
-                    </p>
-
-                    <Link
-                      to={c.to}
-                      className="group/cta inline-flex items-center gap-2.5 text-foreground"
+                    {/* Image */}
+                    <div
+                      className="relative w-full"
+                      style={{ height: "min(56vw, 320px)" }}
                     >
-                      <span className="hairline text-xs tracking-widest uppercase">
-                        Open volume
+                      <LazyImage
+                        src={c.image}
+                        alt={c.name}
+                        eager={i === 0}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+
+                      {/* Floating navigate hint top-right */}
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-background/60 backdrop-blur-sm rounded-full px-3 py-1.5">
+                        <span className="hairline text-foreground/80 text-[10px] tracking-widest uppercase">
+                          View gallery
+                        </span>
+                        <ArrowUpRight size={12} className="text-accent" />
+                      </div>
+                    </div>
+
+                    {/* Text */}
+                    <motion.div
+                      initial={{ y: 12, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.15 }}
+                      className="px-4 pb-5 pt-3"
+                    >
+                      <span className="hairline text-accent text-[10px] tracking-[0.18em] uppercase block mb-1">
+                        Vol {pad(i)} · {c.tagline}
                       </span>
-                      <span className="relative h-px w-8 bg-foreground/40 overflow-hidden">
-                        <span className="absolute inset-y-0 left-0 w-full bg-accent origin-left scale-x-0 group-hover/cta:scale-x-100 transition-transform duration-500 ease-out" />
-                      </span>
-                      <ArrowUpRight size={14} />
-                    </Link>
-                  </motion.div>
+
+                      <motion.div
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{
+                          duration: 0.5,
+                          delay: 0.25,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                        style={{ transformOrigin: "left center" }}
+                        className="h-px w-12 bg-accent my-2.5"
+                      />
+
+                      <p className="text-foreground/75 text-sm leading-relaxed mb-4">
+                        {c.description}
+                      </p>
+
+                      <div className="inline-flex items-center gap-2.5 text-foreground">
+                        <span className="hairline text-xs tracking-widest uppercase">
+                          Open volume
+                        </span>
+                        <span className="h-px w-8 bg-foreground/40" />
+                        <ArrowUpRight size={14} className="text-accent" />
+                      </div>
+                    </motion.div>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -275,13 +299,13 @@ const MobileAccordion: React.FC<{
         );
       })}
 
-      {/* Counter */}
+      {/* Dot counter */}
       <div className="flex items-center justify-between mt-2 px-1">
         <div className="flex items-center gap-2">
           {CATEGORIES.map((_, i) => (
             <button
               key={i}
-              onClick={() => setIndex(i)}
+              onClick={() => setIndex(index === i ? -1 : i)}
               aria-label={`Go to ${CATEGORIES[i].name}`}
               className="flex items-center justify-center"
             >
@@ -310,7 +334,7 @@ const MobileAccordion: React.FC<{
             transition={{ duration: 0.3 }}
             className="hairline text-foreground/50 text-[10px] tabular-nums tracking-widest"
           >
-            {pad(index)} / {pad(CATEGORIES.length - 1)}
+            {index >= 0 ? `${pad(index)} / ${pad(CATEGORIES.length - 1)}` : "—"}
           </motion.span>
         </AnimatePresence>
       </div>
@@ -319,172 +343,174 @@ const MobileAccordion: React.FC<{
 };
 
 // =========================================================================
-// Desktop spine card — memoised to skip re-renders on unrelated index change
+// Desktop SpineCard
+// FIX: Hover — removed React.memo entirely so index prop always reflects
+//      the latest state. The GSAP flex animation is driven by a useEffect
+//      in the parent that runs synchronously whenever index changes.
+//      CSS-only hover overlay handled inline so it never fights GSAP.
 // =========================================================================
-const SpineCard = memo(
-  ({
-    c,
-    i,
-    index,
-    spineRef,
-    onHover,
-    onFocus,
-    onClick,
-  }: {
-    c: Category;
-    i: number;
-    index: number;
-    spineRef: (el: HTMLButtonElement | null) => void;
-    onHover: () => void;
-    onFocus: () => void;
-    onClick: () => void;
-  }) => {
-    const isActive = i === index;
+const SpineCard: React.FC<{
+  c: Category;
+  i: number;
+  index: number;
+  spineRef: (el: HTMLButtonElement | null) => void;
+  onMouseEnter: () => void;
+  onFocus: () => void;
+  onClick: () => void;
+}> = ({ c, i, index, spineRef, onMouseEnter, onFocus, onClick }) => {
+  const isActive = i === index;
 
-    return (
-      <button
-        ref={spineRef}
-        role="tab"
-        aria-selected={isActive}
-        aria-label={`Open ${c.name} gallery`}
-        onMouseEnter={onHover}
-        onFocus={onFocus}
-        onClick={onClick}
-        className="group relative overflow-hidden rounded-sm ring-1 ring-accent/25 bg-card text-left flex-1 min-h-0 cursor-pointer"
-        style={{ flexBasis: 0 }}
+  return (
+    <button
+      ref={spineRef}
+      role="tab"
+      aria-selected={isActive}
+      aria-label={`Open ${c.name} gallery`}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-sm ring-1 ring-accent/25 bg-card text-left flex-1 min-h-0 cursor-pointer"
+      style={{ flexBasis: 0 }}
+    >
+      {/* Background image */}
+      <LazyImage
+        src={c.image}
+        alt=""
+        eager={i === 0}
+        className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out ${
+          isActive
+            ? "opacity-100 scale-100 grayscale-0"
+            : "opacity-35 scale-105 grayscale"
+        }`}
+        // FIX: Remove Tailwind group-hover from className so it doesn't
+        // conflict. Handle hover via the CSS class below instead.
+      />
+
+      {/*
+        FIX desktop hover: separate overlay div handles the hover brightness
+        lift independently of isActive state — group-hover always fires
+        because this div is inside the button which IS the group root.
+      */}
+      {!isActive && (
+        <div className="absolute inset-0 transition-all duration-500 ease-out opacity-100 group-hover:opacity-0 bg-background/65" />
+      )}
+
+      {/* Active gradient scrim */}
+      {isActive && (
+        <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent" />
+      )}
+
+      {/* Left edge gold rule */}
+      <div
+        aria-hidden
+        className={`absolute left-0 top-0 bottom-0 w-px transition-colors duration-500 ${
+          isActive ? "bg-accent" : "bg-accent/40 group-hover:bg-accent"
+        }`}
+      />
+
+      {/* Inactive spine label */}
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-between py-6 transition-opacity duration-300 pointer-events-none ${
+          isActive ? "opacity-0" : "opacity-100 delay-200"
+        }`}
       >
-        {/* Background image — lazy except first */}
-        <LazyImage
-          src={c.image}
-          alt=""
-          eager={i === 0}
-          className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-out ${
-            isActive
-              ? "opacity-100 scale-100"
-              : "opacity-30 scale-105 grayscale group-hover:opacity-55 group-hover:grayscale-0"
-          }`}
-        />
-
-        {/* Tint scrim */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-700 ${
-            isActive
-              ? "bg-gradient-to-t from-background/85 via-background/20 to-transparent opacity-100"
-              : "bg-background/70 opacity-100 group-hover:bg-background/50"
-          }`}
-        />
-
-        {/* Left edge rule */}
-        <div
-          aria-hidden
-          className={`absolute left-0 top-0 bottom-0 w-px transition-colors duration-500 ${
-            isActive ? "bg-accent" : "bg-accent/40 group-hover:bg-accent"
-          }`}
-        />
-
-        {/* Inactive spine label */}
-        <div
-          className={`absolute inset-0 flex flex-col items-center justify-between py-6 transition-opacity duration-300 ${
-            isActive ? "opacity-0 pointer-events-none" : "opacity-100 delay-300"
-          }`}
+        <span className="hairline text-accent tabular-nums">{pad(i)}</span>
+        <span
+          className="font-display text-foreground/85 text-2xl md:text-3xl whitespace-nowrap group-hover:text-foreground transition-colors duration-300"
+          style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
         >
-          <span className="hairline text-accent tabular-nums">{pad(i)}</span>
-          <span
-            className="font-display text-foreground/85 text-2xl md:text-3xl whitespace-nowrap"
-            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-          >
-            {c.name}
-          </span>
-          <Plus
-            size={16}
-            className="text-accent transition-transform duration-500 group-hover:rotate-90"
-          />
-        </div>
+          {c.name}
+        </span>
+        <Plus
+          size={16}
+          className="text-accent transition-transform duration-500 group-hover:rotate-90"
+        />
+      </div>
 
-        {/* Active panel content */}
-        <AnimatePresence>
-          {isActive && (
-            <motion.div
-              key={`active-${i}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, delay: 0.35 }}
-              className="absolute inset-0 z-10 flex flex-col justify-end p-6 md:p-10"
+      {/* Active panel content */}
+      <AnimatePresence>
+        {isActive && (
+          <motion.div
+            key={`active-${i}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="absolute inset-0 z-10 flex flex-col justify-end p-6 md:p-10"
+          >
+            <motion.span
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 0.12, x: 0 }}
+              transition={{ duration: 0.9, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="pointer-events-none absolute top-4 right-6 md:top-8 md:right-10 font-display text-foreground text-[8rem] md:text-[14rem] leading-none tracking-tighter select-none"
             >
+              {pad(i)}
+            </motion.span>
+
+            <div className="relative max-w-xl">
               <motion.span
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 0.12, x: 0 }}
-                transition={{ duration: 0.9, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="pointer-events-none absolute top-4 right-6 md:top-8 md:right-10 font-display text-foreground text-[8rem] md:text-[14rem] leading-none tracking-tighter select-none"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.42 }}
+                className="hairline text-accent block"
               >
-                {pad(i)}
+                Volume {pad(i)} · {c.tagline}
               </motion.span>
 
-              <div className="relative max-w-xl">
-                <motion.span
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.45 }}
-                  className="hairline text-accent block"
-                >
-                  Volume {pad(i)} · {c.tagline}
-                </motion.span>
+              <motion.h3
+                initial={{ opacity: 0, y: 26 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.65, delay: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                className="font-display text-foreground text-5xl md:text-7xl leading-[0.95] mt-3"
+              >
+                {c.name}
+              </motion.h3>
 
-                <motion.h3
-                  initial={{ opacity: 0, y: 26 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.65, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-display text-foreground text-5xl md:text-7xl leading-[0.95] mt-3"
-                >
-                  {c.name}
-                </motion.h3>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.7, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                style={{ transformOrigin: "left center" }}
+                className="h-px w-20 bg-accent my-5"
+              />
 
-                <motion.div
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.7, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                  style={{ transformOrigin: "left center" }}
-                  className="h-px w-20 bg-accent my-5"
+              <motion.p
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.58 }}
+                className="text-foreground/80 leading-relaxed text-base md:text-lg max-w-md"
+              >
+                {c.description}
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.68 }}
+                className="group/cta mt-8 inline-flex items-center gap-3 text-foreground"
+              >
+                <span className="hairline">Open this volume</span>
+                <span className="relative h-px w-12 bg-foreground/40 overflow-hidden">
+                  <span className="absolute inset-y-0 left-0 w-full bg-accent origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out" />
+                </span>
+                <ArrowUpRight
+                  size={18}
+                  className="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
                 />
-
-                <motion.p
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.62 }}
-                  className="text-foreground/80 leading-relaxed text-base md:text-lg max-w-md"
-                >
-                  {c.description}
-                </motion.p>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.72 }}
-                  className="group/cta mt-8 inline-flex items-center gap-3 text-foreground"
-                >
-                  <span className="hairline">Open this volume</span>
-                  <span className="relative h-px w-12 bg-foreground/40 overflow-hidden">
-                    <span className="absolute inset-y-0 left-0 w-full bg-accent origin-left scale-x-0 group-hover/cta:scale-x-100 transition-transform duration-500 ease-out" />
-                  </span>
-                  <ArrowUpRight
-                    size={18}
-                    className="transition-transform duration-500 group-hover/cta:-translate-y-0.5 group-hover/cta:translate-x-0.5"
-                  />
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </button>
-    );
-  }
-);
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </button>
+  );
+};
 
 // =========================================================================
 // Main Section
 // =========================================================================
 const Section: React.FC = () => {
+  // -1 = nothing open on mobile; desktop always has an active index
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const navigate = useNavigate();
@@ -493,7 +519,7 @@ const Section: React.FC = () => {
   const shelfRef = useRef<HTMLDivElement>(null);
   const spineRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  // Lazy-load GSAP after mount
+  // Lazy-load GSAP scroll animations
   useEffect(() => {
     let ctx: any;
     loadGsap().then((mods) => {
@@ -529,7 +555,7 @@ const Section: React.FC = () => {
     return () => ctx?.revert();
   }, []);
 
-  // Animate flex-basis via GSAP when index changes
+  // GSAP flex-grow animation — runs every time index changes
   useEffect(() => {
     loadGsap().then((mods) => {
       if (!mods) return;
@@ -538,14 +564,14 @@ const Section: React.FC = () => {
         if (!el) return;
         gsap.to(el, {
           flexGrow: i === index ? 7 : 1,
-          duration: 0.9,
+          duration: 0.85,
           ease: "expo.out",
         });
       });
     });
   }, [index]);
 
-  // Auto-advance
+  // Auto-advance (desktop only, paused on hover)
   useEffect(() => {
     if (paused) return;
     const id = window.setInterval(
@@ -592,14 +618,14 @@ const Section: React.FC = () => {
           The Shelf · 06 Volumes
         </span>
         <span className="hairline text-foreground/50 tabular-nums text-[10px] md:text-xs">
-          Now reading — {pad(index)} / {pad(CATEGORIES.length - 1)}
+          Now reading — {index >= 0 ? pad(index) : "—"} / {pad(CATEGORIES.length - 1)}
         </span>
       </div>
 
-      {/* MOBILE — accordion, no overlap */}
+      {/* MOBILE */}
       <MobileAccordion index={index} setIndex={setIndex} />
 
-      {/* DESKTOP — bookshelf spines */}
+      {/* DESKTOP */}
       <div
         ref={shelfRef}
         className="mx-auto max-w-7xl mt-6 hidden md:flex flex-row gap-1.5"
@@ -614,7 +640,7 @@ const Section: React.FC = () => {
             i={i}
             index={index}
             spineRef={(el) => { spineRefs.current[i] = el; }}
-            onHover={() => setIndex(i)}
+            onMouseEnter={() => setIndex(i)}
             onFocus={() => setIndex(i)}
             onClick={() => navigate(c.to)}
           />
@@ -646,8 +672,8 @@ const Section: React.FC = () => {
                 className="relative -mt-2 h-5 w-5 flex items-center justify-center"
               >
                 <span
-                  className={`block h-2 w-px transition-all duration-500 ${
-                    i <= index ? "bg-accent h-3" : "bg-foreground/30"
+                  className={`block w-px transition-all duration-500 ${
+                    i <= index ? "bg-accent h-3" : "bg-foreground/30 h-2"
                   }`}
                 />
               </button>
