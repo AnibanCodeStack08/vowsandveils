@@ -111,7 +111,6 @@ export default function Haldi({
 }: HaldiProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [colCount, setColCount] = useState(4);
-  const [ratios, setRatios] = useState<Record<string, number>>({});
 
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
@@ -128,43 +127,6 @@ export default function Haldi({
 
     return () => window.removeEventListener("resize", compute);
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const map: Record<string, number> = {};
-    let pending = images.length;
-
-    images.forEach((img) => {
-      const el = new Image();
-
-      const done = () => {
-        if (cancelled) return;
-
-        pending--;
-
-        if (pending === 0) {
-          setRatios({ ...map });
-        }
-      };
-
-      el.onload = () => {
-        map[img.src] = el.naturalHeight / el.naturalWidth;
-        done();
-      };
-
-      el.onerror = () => {
-        map[img.src] = 1.3;
-        done();
-      };
-
-      el.src = img.src;
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [images]);
 
   const columns: number[][] = (() => {
     const cols = Array.from({ length: colCount }, () => [] as number[]);
@@ -211,9 +173,7 @@ export default function Haldi({
 
   const prev = useCallback(() => {
     setActiveIndex((prev) =>
-      prev === null
-        ? null
-        : (prev - 1 + images.length) % images.length
+      prev === null ? null : (prev - 1 + images.length) % images.length
     );
   }, [images.length]);
 
@@ -243,7 +203,6 @@ export default function Haldi({
       className="relative w-full overflow-hidden bg-black py-24 sm:py-32"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-
         {/* Header */}
         <div
           ref={headingRef}
@@ -397,9 +356,7 @@ function Tile({ image, index, onClick }: TileProps) {
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
 
       <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-linear-to-t from-black/80 to-transparent p-4">
-        <p className="text-white/80 text-xs italic">
-          {image.alt}
-        </p>
+        <p className="text-white/80 text-xs italic">{image.alt}</p>
       </div>
     </motion.button>
   );
