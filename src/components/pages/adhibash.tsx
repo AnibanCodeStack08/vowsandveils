@@ -106,8 +106,6 @@ export default function Adhibash({
   title = "Adhibash",
   subtitle = "The eve before the vows — quiet rituals, soft light, and a bride at home in her own story.",
   description = "Sacred preparations on the night before the wedding — every frame from the eve of the ceremony.",
-  date = "",
-  location = "",
 }: AdhibashProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [colCount, setColCount] = useState(4);
@@ -329,7 +327,7 @@ export default function Adhibash({
         }}
       />
 
-      <div className="relative mx-auto max-w-[2200px] px-4 sm:px-6 lg:px-10">
+      <div className="relative mx-auto max-w-550 px-4 sm:px-6 lg:px-10">
         <div
           ref={headingRef}
           className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
