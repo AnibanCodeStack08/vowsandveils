@@ -80,7 +80,7 @@ const Collage = () => {
       {/* Collage */}
       <motion.div
         ref={gridRef}
-        className="grid grid-cols-5 w-full"
+        className="grid grid-cols-3 md:grid-cols-5 w-full"  // 👈 only change
         style={{ gap: 0 }}
         variants={containerVariants}
         initial="hidden"
