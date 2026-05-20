@@ -8,14 +8,11 @@ import React, {
 } from "react";
 import { ArrowUpRight, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
-
-// Create a motion-enhanced Link component for animated navigation elements
-const MotionLink = motion(Link);
 
 const SectionHeading = lazy(() => import("../pages/sectionheading"));
 
@@ -90,7 +87,7 @@ const CATEGORIES: Category[] = [
 const pad = (n: number) => String(n + 1).padStart(2, "0");
 
 // =========================================================================
-// Mobile card carousel — swipe-friendly horizontal snap strip
+// Mobile card carousel
 // =========================================================================
 const MobileShelf: React.FC<{
   index: number;
@@ -99,11 +96,20 @@ const MobileShelf: React.FC<{
   const trackRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const isDraggingRef = useRef(false);
+  const didDragRef = useRef(false); // track whether a real drag occurred
 
   const handlePointerDown = (e: React.PointerEvent) => {
     startXRef.current = e.clientX;
     isDraggingRef.current = true;
+    didDragRef.current = false;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    if (Math.abs(e.clientX - startXRef.current) > 8) {
+      didDragRef.current = true; // only flag as drag if moved enough
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -118,22 +124,18 @@ const MobileShelf: React.FC<{
 
   return (
     <div className="md:hidden mt-6 select-none">
-      {/* ── Card track ── */}
       <div
         ref={trackRef}
         className="relative overflow-hidden"
         onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={() => {
-          isDraggingRef.current = false;
-        }}
+        onPointerCancel={() => { isDraggingRef.current = false; }}
         style={{ touchAction: "pan-y" }}
       >
         <motion.div
           className="flex"
-          animate={{
-            x: `calc(-${index * 100}% + ${index > 0 ? "0px" : "0px"})`,
-          }}
+          animate={{ x: `calc(-${index * 100}%)` }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           style={{ willChange: "transform" }}
         >
@@ -145,7 +147,6 @@ const MobileShelf: React.FC<{
                 className="relative shrink-0 w-full"
                 style={{ height: "min(70vw, 420px)" }}
               >
-                {/* ── Image ── */}
                 <motion.img
                   src={c.image}
                   alt={c.name}
@@ -158,18 +159,13 @@ const MobileShelf: React.FC<{
                   }}
                   transition={{ duration: 0.7, ease: "easeOut" }}
                 />
-
-                {/* Gradient scrim */}
                 <div className="absolute inset-0 bg-linear-to-t from-background/90 via-background/25 to-transparent" />
-
-                {/* Left accent binding */}
                 <div
                   className={`absolute left-0 top-0 bottom-0 w-0.5 transition-colors duration-500 ${
                     isActive ? "bg-accent" : "bg-accent/30"
                   }`}
                 />
 
-                {/* ── Content ── */}
                 <AnimatePresence mode="wait">
                   {isActive && (
                     <motion.div
@@ -180,7 +176,6 @@ const MobileShelf: React.FC<{
                       transition={{ duration: 0.4, delay: 0.1 }}
                       className="absolute inset-0 flex flex-col justify-end p-5"
                     >
-                      {/* Ghost numeral */}
                       <span
                         aria-hidden
                         className="pointer-events-none absolute top-3 right-4 font-display text-foreground/10 text-[6rem] leading-none tracking-tighter select-none"
@@ -196,15 +191,10 @@ const MobileShelf: React.FC<{
                         {c.name}
                       </h3>
 
-                      {/* Accent rule */}
                       <motion.div
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
-                        transition={{
-                          duration: 0.5,
-                          delay: 0.3,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
+                        transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                         style={{ transformOrigin: "left center" }}
                         className="h-px w-14 bg-accent my-3"
                       />
@@ -213,9 +203,15 @@ const MobileShelf: React.FC<{
                         {c.description}
                       </p>
 
-                      {/* ✅ FIXED: was <a href={c.to}> — now uses Link for client-side navigation */}
+                      {/*
+                        ✅ FIX: Link is NOT inside any <button>.
+                        We also stop pointer propagation so the swipe
+                        handler on the parent doesn't swallow the tap.
+                      */}
                       <Link
                         to={c.to}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => e.stopPropagation()}
                         className="group/cta mt-5 inline-flex items-center gap-2.5 text-foreground"
                       >
                         <span className="hairline text-xs tracking-widest uppercase">
@@ -235,9 +231,8 @@ const MobileShelf: React.FC<{
         </motion.div>
       </div>
 
-      {/* ── Dot + counter row ── */}
+      {/* Dot + counter row */}
       <div className="flex items-center justify-between mt-4 px-1">
-        {/* Dots */}
         <div className="flex items-center gap-2">
           {CATEGORIES.map((_, i) => (
             <button
@@ -262,7 +257,6 @@ const MobileShelf: React.FC<{
           ))}
         </div>
 
-        {/* Chapter name + counter */}
         <AnimatePresence mode="wait">
           <motion.span
             key={index}
@@ -277,7 +271,6 @@ const MobileShelf: React.FC<{
         </AnimatePresence>
       </div>
 
-      {/* ── Swipe hint ── */}
       <p className="mt-2 text-center hairline text-foreground/30 text-[10px] tracking-widest uppercase">
         Swipe to explore
       </p>
@@ -292,6 +285,7 @@ const Section: React.FC = () => {
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
+  const navigate = useNavigate(); // ✅ used for desktop spine navigation
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const shelfRef = useRef<HTMLDivElement>(null);
@@ -299,7 +293,7 @@ const Section: React.FC = () => {
 
   const active = CATEGORIES[index];
 
-  // ----- Auto-advance -----
+  // Auto-advance
   useEffect(() => {
     if (paused) return;
     const id = window.setInterval(() => {
@@ -308,7 +302,7 @@ const Section: React.FC = () => {
     return () => window.clearInterval(id);
   }, [paused]);
 
-  // ----- Scroll-in choreography -----
+  // Scroll-in choreography
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from(shelfRef.current, {
@@ -322,7 +316,6 @@ const Section: React.FC = () => {
         duration: 1,
         ease: "expo.out",
       });
-
       gsap.from(spineRefs.current.filter(Boolean), {
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -340,22 +333,18 @@ const Section: React.FC = () => {
     return () => ctx.revert();
   }, []);
 
-  // ----- Animate flex-basis on index/hover change -----
+  // Animate flex-basis
   useEffect(() => {
     spineRefs.current.forEach((el, i) => {
       if (!el) return;
       const isActive = i === index;
       const isPeek = hovered === i && !isActive;
       const grow = isActive ? 7 : isPeek ? 1.6 : 1;
-      gsap.to(el, {
-        flexGrow: grow,
-        duration: 0.9,
-        ease: "expo.out",
-      });
+      gsap.to(el, { flexGrow: grow, duration: 0.9, ease: "expo.out" });
     });
   }, [index, hovered]);
 
-  // ----- Keyboard nav -----
+  // Keyboard nav
   const go = useCallback(
     (dir: 1 | -1) =>
       setIndex((i) => (i + dir + CATEGORIES.length) % CATEGORIES.length),
@@ -389,7 +378,7 @@ const Section: React.FC = () => {
         />
       </Suspense>
 
-      {/* ── Shelf meta bar ── */}
+      {/* Shelf meta bar */}
       <div className="mx-auto max-w-7xl mt-10 md:mt-12 flex items-center justify-between border-t border-accent/30 pt-4">
         <span className="hairline text-accent text-[10px] md:text-xs tracking-widest">
           The Shelf · 06 Volumes
@@ -399,14 +388,10 @@ const Section: React.FC = () => {
         </span>
       </div>
 
-      {/* ══════════════════════════════════════════════
-          MOBILE — full-width card swipe carousel
-      ══════════════════════════════════════════════ */}
+      {/* MOBILE */}
       <MobileShelf index={index} setIndex={setIndex} />
 
-      {/* ══════════════════════════════════════════════
-          DESKTOP — original bookshelf spine accordion
-      ══════════════════════════════════════════════ */}
+      {/* DESKTOP */}
       <div
         ref={shelfRef}
         className="mx-auto max-w-7xl mt-6 hidden md:flex flex-row gap-1.5"
@@ -417,20 +402,30 @@ const Section: React.FC = () => {
         {CATEGORIES.map((c, i) => {
           const isActive = i === index;
           return (
+            /*
+              ✅ FIX: The outer element is now a plain <button>.
+              It handles TWO jobs via one onClick:
+                1. If not active → expand this panel (setIndex)
+                2. If already active → navigate to the gallery page
+              There is NO <a> or <Link> nested inside — that was
+              invalid HTML and silently broke click handling.
+            */
             <button
               key={c.name}
-              ref={(el) => {
-                spineRefs.current[i] = el;
-              }}
+              ref={(el) => { spineRefs.current[i] = el; }}
               role="tab"
               aria-selected={isActive}
-              aria-label={c.name}
-              onClick={() => setIndex(i)}
+              aria-label={isActive ? `Open ${c.name} gallery` : c.name}
+              onClick={() => {
+                if (isActive) {
+                  navigate(c.to); // already expanded → go to page
+                } else {
+                  setIndex(i);   // not expanded yet → expand first
+                }
+              }}
               onMouseEnter={() => setHovered(i)}
               onFocus={() => setIndex(i)}
-              className={`group relative overflow-hidden rounded-sm ring-1 ring-accent/25 bg-card text-left flex-1 min-h-0 ${
-                isActive ? "cursor-default" : "cursor-pointer"
-              }`}
+              className="group relative overflow-hidden rounded-sm ring-1 ring-accent/25 bg-card text-left flex-1 min-h-0 cursor-pointer"
               style={{ flexBasis: 0 }}
             >
               {/* Background image */}
@@ -460,27 +455,20 @@ const Section: React.FC = () => {
               <div
                 aria-hidden
                 className={`absolute left-0 top-0 bottom-0 w-px transition-colors duration-500 ${
-                  isActive
-                    ? "bg-accent"
-                    : "bg-accent/40 group-hover:bg-accent"
+                  isActive ? "bg-accent" : "bg-accent/40 group-hover:bg-accent"
                 }`}
               />
 
-              {/* Inactive spine label (vertical) */}
+              {/* Inactive spine label */}
               <div
                 className={`absolute inset-0 flex flex-col items-center justify-between py-6 transition-opacity duration-300 ${
                   isActive ? "opacity-0 pointer-events-none" : "opacity-100 delay-300"
                 }`}
               >
-                <span className="hairline text-accent tabular-nums">
-                  {pad(i)}
-                </span>
+                <span className="hairline text-accent tabular-nums">{pad(i)}</span>
                 <span
                   className="font-display text-foreground/85 text-2xl md:text-3xl whitespace-nowrap"
-                  style={{
-                    writingMode: "vertical-rl",
-                    transform: "rotate(180deg)",
-                  }}
+                  style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
                 >
                   {c.name}
                 </span>
@@ -490,7 +478,7 @@ const Section: React.FC = () => {
                 />
               </div>
 
-              {/* Active spine content */}
+              {/* Active panel content */}
               <AnimatePresence>
                 {isActive && (
                   <motion.div
@@ -504,11 +492,7 @@ const Section: React.FC = () => {
                     <motion.span
                       initial={{ opacity: 0, x: 30 }}
                       animate={{ opacity: 0.12, x: 0 }}
-                      transition={{
-                        duration: 0.9,
-                        delay: 0.45,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
+                      transition={{ duration: 0.9, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
                       className="pointer-events-none absolute top-4 right-6 md:top-8 md:right-10 font-display text-foreground text-[8rem] md:text-[14rem] leading-none tracking-tighter select-none"
                     >
                       {pad(i)}
@@ -527,11 +511,7 @@ const Section: React.FC = () => {
                       <motion.h3
                         initial={{ opacity: 0, y: 26 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          duration: 0.65,
-                          delay: 0.5,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
+                        transition={{ duration: 0.65, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         className="font-display text-foreground text-5xl md:text-7xl leading-[0.95] mt-3"
                       >
                         {active.name}
@@ -540,11 +520,7 @@ const Section: React.FC = () => {
                       <motion.div
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
-                        transition={{
-                          duration: 0.7,
-                          delay: 0.7,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
+                        transition={{ duration: 0.7, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
                         style={{ transformOrigin: "left center" }}
                         className="h-px w-20 bg-accent my-5"
                       />
@@ -558,9 +534,12 @@ const Section: React.FC = () => {
                         {active.description}
                       </motion.p>
 
-                      {/* ✅ FIXED: was <motion.a href={active.to}> — now uses MotionLink for client-side navigation */}
-                      <MotionLink
-                        to={active.to}
+                      {/*
+                        ✅ FIX: This is now a pure visual row — NO <a> or <Link>.
+                        Navigation is handled by the outer <button>'s onClick above.
+                        Clicking anywhere on the active panel navigates to the gallery.
+                      */}
+                      <motion.div
                         initial={{ opacity: 0, y: 14 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.55, delay: 0.72 }}
@@ -574,7 +553,7 @@ const Section: React.FC = () => {
                           size={18}
                           className="transition-transform duration-500 group-hover/cta:-translate-y-0.5 group-hover/cta:translate-x-0.5"
                         />
-                      </MotionLink>
+                      </motion.div>
                     </div>
                   </motion.div>
                 )}
@@ -584,7 +563,7 @@ const Section: React.FC = () => {
         })}
       </div>
 
-      {/* ── Footer scrub (shared — works for both views) ── */}
+      {/* Footer scrub */}
       <div className="mx-auto max-w-7xl mt-6 md:mt-8 flex items-center gap-4 md:gap-6">
         <button
           onClick={() => go(-1)}
