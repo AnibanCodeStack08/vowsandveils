@@ -96,7 +96,7 @@ const MobileShelf: React.FC<{
   const trackRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const isDraggingRef = useRef(false);
-  const didDragRef = useRef(false); // track whether a real drag occurred
+  const didDragRef = useRef(false);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     startXRef.current = e.clientX;
@@ -108,7 +108,7 @@ const MobileShelf: React.FC<{
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDraggingRef.current) return;
     if (Math.abs(e.clientX - startXRef.current) > 8) {
-      didDragRef.current = true; // only flag as drag if moved enough
+      didDragRef.current = true;
     }
   };
 
@@ -203,11 +203,7 @@ const MobileShelf: React.FC<{
                         {c.description}
                       </p>
 
-                      {/*
-                        ✅ FIX: Link is NOT inside any <button>.
-                        We also stop pointer propagation so the swipe
-                        handler on the parent doesn't swallow the tap.
-                      */}
+                      {/* Mobile: Link with stopPropagation so swipe doesn't swallow the tap */}
                       <Link
                         to={c.to}
                         onPointerDown={(e) => e.stopPropagation()}
@@ -285,7 +281,7 @@ const Section: React.FC = () => {
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
-  const navigate = useNavigate(); // ✅ used for desktop spine navigation
+  const navigate = useNavigate();
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const shelfRef = useRef<HTMLDivElement>(null);
@@ -333,7 +329,7 @@ const Section: React.FC = () => {
     return () => ctx.revert();
   }, []);
 
-  // Animate flex-basis
+  // Animate flex-basis on index/hover change
   useEffect(() => {
     spineRefs.current.forEach((el, i) => {
       if (!el) return;
@@ -402,29 +398,18 @@ const Section: React.FC = () => {
         {CATEGORIES.map((c, i) => {
           const isActive = i === index;
           return (
-            /*
-              ✅ FIX: The outer element is now a plain <button>.
-              It handles TWO jobs via one onClick:
-                1. If not active → expand this panel (setIndex)
-                2. If already active → navigate to the gallery page
-              There is NO <a> or <Link> nested inside — that was
-              invalid HTML and silently broke click handling.
-            */
             <button
               key={c.name}
               ref={(el) => { spineRefs.current[i] = el; }}
               role="tab"
               aria-selected={isActive}
-              aria-label={isActive ? `Open ${c.name} gallery` : c.name}
-              onClick={() => {
-                if (isActive) {
-                  navigate(c.to); // already expanded → go to page
-                } else {
-                  setIndex(i);   // not expanded yet → expand first
-                }
+              aria-label={`Open ${c.name} gallery`}
+              onMouseEnter={() => {
+                setHovered(i);
+                setIndex(i); // ✅ hover expands the panel visually
               }}
-              onMouseEnter={() => setHovered(i)}
               onFocus={() => setIndex(i)}
+              onClick={() => navigate(c.to)} // ✅ ONE click always navigates — same as Team
               className="group relative overflow-hidden rounded-sm ring-1 ring-accent/25 bg-card text-left flex-1 min-h-0 cursor-pointer"
               style={{ flexBasis: 0 }}
             >
@@ -534,11 +519,7 @@ const Section: React.FC = () => {
                         {active.description}
                       </motion.p>
 
-                      {/*
-                        ✅ FIX: This is now a pure visual row — NO <a> or <Link>.
-                        Navigation is handled by the outer <button>'s onClick above.
-                        Clicking anywhere on the active panel navigates to the gallery.
-                      */}
+                      {/* Pure visual CTA row — click on the whole panel navigates */}
                       <motion.div
                         initial={{ opacity: 0, y: 14 }}
                         animate={{ opacity: 1, y: 0 }}
