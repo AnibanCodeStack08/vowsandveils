@@ -91,7 +91,7 @@ function LozengeDivider({ className }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center gap-3 w-full ${className ?? ""}`}>
       <span
-        className="flex-1 h-px max-w-30 sm:max-w-45"
+        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
         style={{
           background:
             "linear-gradient(to right, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -109,7 +109,7 @@ function LozengeDivider({ className }: { className?: string }) {
         />
       </svg>
       <span
-        className="flex-1 h-px max-w-30 sm:max-w-45"
+        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
         style={{
           background:
             "linear-gradient(to left, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -235,7 +235,7 @@ export default function PreWedding({
       {/* ── Backgrounds ──────────────────────────────────────────────────── */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-160"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[640px]"
         style={{
           background:
             "radial-gradient(ellipse 80% 65% at 50% -5%, color-mix(in oklab, var(--color-gold) 15%, transparent), transparent 60%)",
@@ -271,9 +271,8 @@ export default function PreWedding({
         }}
       />
 
-      <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
-
-        {/* ── HEADER — centred ─────────────────────────────────────────────── */}
+      {/* ── HEADER — centred, padded ──────────────────────────────────────── */}
+      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
         <div
           ref={headingRef}
           className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
@@ -355,14 +354,16 @@ export default function PreWedding({
             </span>
           </div>
         </div>
+      </div>
 
-        {/* ── MASONRY GRID ─────────────────────────────────────────────────── */}
+      {/* ── MASONRY GRID — full bleed, no side padding ────────────────────── */}
+      <div className="relative w-full">
         <div
-          className="grid items-stretch gap-0.75"
+          className="grid items-stretch gap-[3px]"
           style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
         >
           {columns.map((colIndices, ci) => (
-            <div key={ci} className="flex h-full flex-col gap-0.75">
+            <div key={ci} className="flex h-full flex-col gap-[3px]">
               {colIndices.map((globalIndex, position) => (
                 <Tile
                   key={images[globalIndex].src + globalIndex}
@@ -376,10 +377,14 @@ export default function PreWedding({
           ))}
         </div>
 
+        {/* Preload all images */}
         <div aria-hidden className="sr-only absolute w-0 h-0 overflow-hidden">
           {images.map((img, i) => <img key={i} src={img.src} alt="" />)}
         </div>
+      </div>
 
+      {/* ── BOTTOM RULE — padded to match header ─────────────────────────── */}
+      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
       </div>
 
@@ -498,7 +503,7 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
         style={{ boxShadow: "inset 0 0 55px color-mix(in oklab, var(--color-gold) 25%, transparent)" }}
       />
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-480 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
+        className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-[480ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
         style={{
           background: "linear-gradient(to top, color-mix(in oklab, var(--color-background) 82%, transparent), transparent)",
           paddingTop: "2.5rem", paddingBottom: "0.75rem", paddingInline: "0.875rem",
