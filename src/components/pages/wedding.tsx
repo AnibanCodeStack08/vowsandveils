@@ -260,7 +260,7 @@ export default function Wedding({
     >
       {/* ── Backgrounds ──────────────────────────────────────────────────── */}
 
-      {/* Wide centred glow — softly symmetrical for the centred layout */}
+      {/* Wide centred glow */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[640px]"
@@ -270,7 +270,7 @@ export default function Wedding({
         }}
       />
 
-      {/* Faint concentric ring motif — centred, purely decorative */}
+      {/* Faint concentric ring motif */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.045]"
@@ -294,7 +294,7 @@ export default function Wedding({
         ))}
       </div>
 
-      {/* Dot grid — very faint */}
+      {/* Dot grid */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.028] mix-blend-screen"
@@ -305,14 +305,12 @@ export default function Wedding({
         }}
       />
 
+      {/* ── HEADER — centred, padded ──────────────────────────────────────── */}
       <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
-
-        {/* ── HEADER — centred ─────────────────────────────────────────────── */}
         <div
           ref={headingRef}
           className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
         >
-
           {/* Top lozenge rule */}
           <LozengeDivider className="wd-top-rule max-w-2xl" />
 
@@ -407,8 +405,10 @@ export default function Wedding({
             </span>
           </div>
         </div>
+      </div>
 
-        {/* ── MASONRY GRID ──────────────────────────────────────────────────── */}
+      {/* ── MASONRY GRID — full bleed, no side padding ────────────────────── */}
+      <div className="relative w-full">
         <div
           className="grid items-stretch gap-[3px]"
           style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
@@ -434,8 +434,10 @@ export default function Wedding({
             <img key={i} src={img.src} alt="" />
           ))}
         </div>
+      </div>
 
-        {/* Bottom rule */}
+      {/* ── BOTTOM RULE — padded to match header ─────────────────────────── */}
+      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
       </div>
 
@@ -546,9 +548,6 @@ interface TileProps {
 }
 
 function Tile({ image, index, isLast = false, onClick }: TileProps) {
-  // When this tile is the last in its column we make the button flex-1 so it
-  // expands to consume the remaining column height, then give the img h-full
-  // so it fills that space with object-cover — all four column bottoms align.
   const isLastCls = isLast ? " flex-1 flex flex-col" : "";
   const imgCls    = isLast
     ? "block w-full flex-1 h-0 min-h-0 object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]"
