@@ -8,10 +8,14 @@ import React, {
 } from "react";
 import { ArrowUpRight, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
+
+// Create a motion-enhanced Link component for animated navigation elements
+const MotionLink = motion(Link);
 
 const SectionHeading = lazy(() => import("../pages/sectionheading"));
 
@@ -87,7 +91,6 @@ const pad = (n: number) => String(n + 1).padStart(2, "0");
 
 // =========================================================================
 // Mobile card carousel — swipe-friendly horizontal snap strip
-// Each card = full-width; inactive cards peek from the sides.
 // =========================================================================
 const MobileShelf: React.FC<{
   index: number;
@@ -97,7 +100,6 @@ const MobileShelf: React.FC<{
   const startXRef = useRef(0);
   const isDraggingRef = useRef(false);
 
-  // Touch / pointer swipe handling
   const handlePointerDown = (e: React.PointerEvent) => {
     startXRef.current = e.clientX;
     isDraggingRef.current = true;
@@ -114,7 +116,6 @@ const MobileShelf: React.FC<{
     }
   };
 
-
   return (
     <div className="md:hidden mt-6 select-none">
       {/* ── Card track ── */}
@@ -123,13 +124,16 @@ const MobileShelf: React.FC<{
         className="relative overflow-hidden"
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        onPointerCancel={() => { isDraggingRef.current = false; }}
+        onPointerCancel={() => {
+          isDraggingRef.current = false;
+        }}
         style={{ touchAction: "pan-y" }}
       >
-        {/* Cards layer — translate on index change */}
         <motion.div
           className="flex"
-          animate={{ x: `calc(-${index * 100}% + ${index > 0 ? "0px" : "0px"})` }}
+          animate={{
+            x: `calc(-${index * 100}% + ${index > 0 ? "0px" : "0px"})`,
+          }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           style={{ willChange: "transform" }}
         >
@@ -160,7 +164,9 @@ const MobileShelf: React.FC<{
 
                 {/* Left accent binding */}
                 <div
-                  className={`absolute left-0 top-0 bottom-0 w-0.5 transition-colors duration-500 ${isActive ? "bg-accent" : "bg-accent/30"}`}
+                  className={`absolute left-0 top-0 bottom-0 w-0.5 transition-colors duration-500 ${
+                    isActive ? "bg-accent" : "bg-accent/30"
+                  }`}
                 />
 
                 {/* ── Content ── */}
@@ -194,7 +200,11 @@ const MobileShelf: React.FC<{
                       <motion.div
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
-                        transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{
+                          duration: 0.5,
+                          delay: 0.3,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
                         style={{ transformOrigin: "left center" }}
                         className="h-px w-14 bg-accent my-3"
                       />
@@ -203,8 +213,9 @@ const MobileShelf: React.FC<{
                         {c.description}
                       </p>
 
-                      <a
-                        href={c.to}
+                      {/* ✅ FIXED: was <a href={c.to}> — now uses Link for client-side navigation */}
+                      <Link
+                        to={c.to}
                         className="group/cta mt-5 inline-flex items-center gap-2.5 text-foreground"
                       >
                         <span className="hairline text-xs tracking-widest uppercase">
@@ -214,7 +225,7 @@ const MobileShelf: React.FC<{
                           <span className="absolute inset-y-0 left-0 w-full bg-accent origin-left scale-x-0 group-hover/cta:scale-x-100 transition-transform duration-500 ease-out" />
                         </span>
                         <ArrowUpRight size={14} />
-                      </a>
+                      </Link>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -238,7 +249,10 @@ const MobileShelf: React.FC<{
               <motion.span
                 animate={{
                   width: i === index ? 20 : 5,
-                  backgroundColor: i === index ? "var(--color-accent, #c9a96e)" : "rgba(255,255,255,0.25)",
+                  backgroundColor:
+                    i === index
+                      ? "var(--color-accent, #c9a96e)"
+                      : "rgba(255,255,255,0.25)",
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="block h-0.75 rounded-full"
@@ -263,7 +277,7 @@ const MobileShelf: React.FC<{
         </AnimatePresence>
       </div>
 
-      {/* ── Swipe hint (only shows on very first render) ── */}
+      {/* ── Swipe hint ── */}
       <p className="mt-2 text-center hairline text-foreground/30 text-[10px] tracking-widest uppercase">
         Swipe to explore
       </p>
@@ -272,7 +286,7 @@ const MobileShelf: React.FC<{
 };
 
 // =========================================================================
-// Section — "Bookshelf Spines" accordion  (DESKTOP UNCHANGED)
+// Section — "Bookshelf Spines" accordion
 // =========================================================================
 const Section: React.FC = () => {
   const [index, setIndex] = useState(0);
@@ -386,13 +400,12 @@ const Section: React.FC = () => {
       </div>
 
       {/* ══════════════════════════════════════════════
-          MOBILE  — full-width card swipe carousel
+          MOBILE — full-width card swipe carousel
       ══════════════════════════════════════════════ */}
       <MobileShelf index={index} setIndex={setIndex} />
 
       {/* ══════════════════════════════════════════════
           DESKTOP — original bookshelf spine accordion
-          (hidden on mobile, completely untouched)
       ══════════════════════════════════════════════ */}
       <div
         ref={shelfRef}
@@ -447,7 +460,9 @@ const Section: React.FC = () => {
               <div
                 aria-hidden
                 className={`absolute left-0 top-0 bottom-0 w-px transition-colors duration-500 ${
-                  isActive ? "bg-accent" : "bg-accent/40 group-hover:bg-accent"
+                  isActive
+                    ? "bg-accent"
+                    : "bg-accent/40 group-hover:bg-accent"
                 }`}
               />
 
@@ -462,7 +477,10 @@ const Section: React.FC = () => {
                 </span>
                 <span
                   className="font-display text-foreground/85 text-2xl md:text-3xl whitespace-nowrap"
-                  style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                  style={{
+                    writingMode: "vertical-rl",
+                    transform: "rotate(180deg)",
+                  }}
                 >
                   {c.name}
                 </span>
@@ -486,7 +504,11 @@ const Section: React.FC = () => {
                     <motion.span
                       initial={{ opacity: 0, x: 30 }}
                       animate={{ opacity: 0.12, x: 0 }}
-                      transition={{ duration: 0.9, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{
+                        duration: 0.9,
+                        delay: 0.45,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
                       className="pointer-events-none absolute top-4 right-6 md:top-8 md:right-10 font-display text-foreground text-[8rem] md:text-[14rem] leading-none tracking-tighter select-none"
                     >
                       {pad(i)}
@@ -505,7 +527,11 @@ const Section: React.FC = () => {
                       <motion.h3
                         initial={{ opacity: 0, y: 26 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.65, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                        transition={{
+                          duration: 0.65,
+                          delay: 0.5,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
                         className="font-display text-foreground text-5xl md:text-7xl leading-[0.95] mt-3"
                       >
                         {active.name}
@@ -514,7 +540,11 @@ const Section: React.FC = () => {
                       <motion.div
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
-                        transition={{ duration: 0.7, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{
+                          duration: 0.7,
+                          delay: 0.7,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
                         style={{ transformOrigin: "left center" }}
                         className="h-px w-20 bg-accent my-5"
                       />
@@ -528,8 +558,9 @@ const Section: React.FC = () => {
                         {active.description}
                       </motion.p>
 
-                      <motion.a
-                        href={active.to}
+                      {/* ✅ FIXED: was <motion.a href={active.to}> — now uses MotionLink for client-side navigation */}
+                      <MotionLink
+                        to={active.to}
                         initial={{ opacity: 0, y: 14 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.55, delay: 0.72 }}
@@ -543,7 +574,7 @@ const Section: React.FC = () => {
                           size={18}
                           className="transition-transform duration-500 group-hover/cta:-translate-y-0.5 group-hover/cta:translate-x-0.5"
                         />
-                      </motion.a>
+                      </MotionLink>
                     </div>
                   </motion.div>
                 )}
