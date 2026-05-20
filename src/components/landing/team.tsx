@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
@@ -24,12 +24,13 @@ interface TeamProps {
   description?: string;
 }
 
+// ── Change 1: reordered — Rony now at #4, Asmita at #5 ──
 const DEFAULT_MEMBERS: TeamMember[] = [
   { name: "Santanu Das",     role: "Founder",              image: santanu,   quote: "Frames are memory's grammar." },
   { name: "Subhankar Dutta", role: "Lead Photographer",    image: subhankar, quote: "Light first. Always light." },
   { name: "Ujjwal Biswas",   role: "Lead Cinematographer", image: ujjwal,    quote: "A film is a held breath." },
-  { name: "Asmita Moulik",   role: "Video Editor",         image: asmita,    quote: "The cut is where feeling lives." },
   { name: "Rony Roy",        role: "Cinematographer",      image: rony,      quote: "Compose, then disappear." },
+  { name: "Asmita Moulik",   role: "Video Editor",         image: asmita,    quote: "The cut is where feeling lives." },
   { name: "Sajal Biswas",    role: "Photo Editor",         image: sajal,     quote: "Color is the second exposure." },
 ];
 
@@ -40,17 +41,11 @@ export default function Team({
   description = "Six storytellers crafting the quiet, unrepeatable moments of your day. Hover a name to meet them.",
 }: TeamProps) {
   const sectionRef = useRef<HTMLElement>(null);
+  // ── Change 4: default is 0 (Santanu Das) — explicit and intentional ──
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (paused) return;
-    const id = window.setInterval(() => {
-      setActive((a) => (a + 1) % members.length);
-    }, 4200);
-    return () => window.clearInterval(id);
-  }, [paused, members.length]);
+  // ── Change 2: auto-scroll useEffect removed entirely ──
 
   useLayoutEffect(() => {
     if (!sectionRef.current) return;
@@ -75,8 +70,6 @@ export default function Team({
       id="team"
       ref={sectionRef}
       aria-labelledby="team-heading"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
       className="relative isolate overflow-hidden bg-background text-foreground"
     >
       <motion.div
@@ -110,17 +103,16 @@ export default function Team({
           </div>
 
           {/* Meta — desktop: aside column | mobile: compact horizontal strip */}
+          {/* ── Change 1 (cont): "Reel" meta removed from both mobile and desktop strips ── */}
           <aside className="md:col-span-4 md:pt-3">
             {/* Mobile: horizontal row of metas */}
             <dl className="flex items-center gap-0 divide-x divide-border/60 border border-border/40 md:hidden">
               <MetaCompact label="Cast" value={String(members.length).padStart(2, "0")} />
-              <MetaCompact label="Reel" value="2026 · 35mm" />
               <MetaCompact label="Now" value={`#${String(active + 1).padStart(2, "0")} ${member.name.split(" ")[0]}`} />
             </dl>
             {/* Desktop: stacked */}
             <dl className="hidden md:grid md:grid-cols-1 gap-x-6 gap-y-4 text-sm">
               <Meta label="Cast" value={String(members.length).padStart(2, "0")} />
-              <Meta label="Reel" value="2026 · 35mm" />
               <Meta label="Now" value={`#${String(active + 1).padStart(2, "0")} ${member.name.split(" ")[0]}`} />
             </dl>
           </aside>
@@ -141,13 +133,11 @@ export default function Team({
                             sm:w-[48%] sm:flex-shrink-0
                             md:w-full md:max-w-lg md:mx-auto"
                 style={{
-                  /* Mobile: natural aspect-ratio portrait; tablet/desktop override via height below */
                   aspectRatio: "3/4",
                   maxHeight: "clamp(280px, 55vw, 500px)",
                   boxShadow: "0 40px 100px -40px color-mix(in oklab, var(--color-gold) 25%, transparent)",
                 }}
               >
-                {/* desktop: fixed height override */}
                 <style>{`@media (min-width: 768px) { .portrait-frame { height: 31.25rem; aspect-ratio: unset; max-height: unset; } }`}</style>
 
                 <AnimatePresence mode="popLayout">
@@ -176,7 +166,7 @@ export default function Team({
                 <Corner className="bottom-2 right-2 rotate-180 sm:bottom-3 sm:right-3" />
               </div>
 
-              {/* Mobile-only inline cast list (sits beside the portrait on sm+) */}
+              {/* Mobile-only inline cast list */}
               <ol className="flex-1 sm:flex sm:flex-col sm:justify-center md:hidden">
                 {members.map((m, i) => (
                   <CastRow
@@ -239,7 +229,7 @@ export default function Team({
               </div>
             </div>
 
-            {/* Progress bars */}
+            {/* Progress bars — static, no auto-advance animation */}
             <div className="mt-4 flex items-center gap-1.5 sm:mt-5 sm:gap-2">
               {members.map((_, i) => (
                 <button
@@ -253,11 +243,8 @@ export default function Team({
                     className="absolute inset-y-0 left-0 block"
                     style={{ background: "var(--color-gold)" }}
                     initial={false}
-                    animate={{ width: i < active ? "100%" : i === active ? (paused ? "30%" : "100%") : "0%" }}
-                    transition={{
-                      duration: i === active && !paused ? 4.2 : 0.4,
-                      ease: i === active && !paused ? "linear" : "easeOut",
-                    }}
+                    animate={{ width: i <= active ? "100%" : "0%" }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
                   />
                 </button>
               ))}
@@ -441,15 +428,7 @@ function CastRow({
             </span>
           </div>
         </div>
-        <motion.span
-          aria-hidden
-          className={`font-display ${compact ? "text-base" : "text-2xl"}`}
-          style={{ color: "var(--color-gold)" }}
-          animate={{ x: isActive ? 0 : -8, opacity: isActive ? 1 : 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          →
-        </motion.span>
+        {/* ── Change 3: hover arrow (→) removed from CastRow entirely ── */}
       </button>
       <motion.span
         aria-hidden

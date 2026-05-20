@@ -12,16 +12,36 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 // ---- Lazy GSAP (avoids blocking first paint) ----
-let gsapLoaded = false;
+//
+// BUG FIX (PRIMARY — desktop hover expansion broken):
+// The original `loadGsap` used a boolean flag `gsapLoaded` and returned nothing
+// (`return;`) on subsequent calls after the first load. This caused every call
+// after the initial load to resolve with `undefined`, making the guard
+// `if (!mods) return` in the flex-grow useEffect bail out silently.
+//
+// Result: card 0 expanded correctly on mount (first call → GSAP loads → returns
+// the module), but every subsequent hover triggered a state change that ran the
+// useEffect, called loadGsap(), received `undefined`, and exited immediately.
+// No cards ever expanded on hover.
+//
+// FIX: Cache the entire { gsap, ScrollTrigger } object and always return it,
+// so every call after the first load returns the live module reference.
+let gsapCache: { gsap: any; ScrollTrigger: any } | null = null;
+
 const loadGsap = async () => {
-  if (gsapLoaded) return;
+  // Already loaded — return the cached instance immediately.
+  // Previously this path returned `undefined`, breaking all post-mount animations.
+  if (gsapCache) return gsapCache;
+
   const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
     import("gsap"),
     import("gsap/ScrollTrigger"),
   ]);
   gsap.registerPlugin(ScrollTrigger);
-  gsapLoaded = true;
-  return { gsap, ScrollTrigger };
+
+  // Store the live references so future calls get them back
+  gsapCache = { gsap, ScrollTrigger };
+  return gsapCache;
 };
 
 const SectionHeading = lazy(() => import("../pages/sectionheading"));
@@ -154,9 +174,7 @@ const LazyImage = memo(
 );
 
 // =========================================================================
-// Mobile Accordion
-// FIX 1: Toggle close — clicking open header sets index to -1
-// FIX 2: Full expanded area is a clickable navigate zone
+// Mobile Accordion — UNCHANGED (working correctly)
 // =========================================================================
 const MobileAccordion: React.FC<{
   index: number;
@@ -176,7 +194,7 @@ const MobileAccordion: React.FC<{
           >
             {/* ---- Header — always visible, toggles open/close ---- */}
             <button
-              onClick={() => setIndex(isActive ? -1 : i)}  // ← FIX: toggle close
+              onClick={() => setIndex(isActive ? -1 : i)}
               aria-expanded={isActive}
               aria-label={isActive ? `Close ${c.name}` : `Open ${c.name}`}
               className="relative w-full flex items-center justify-between px-4 py-3 z-10"
@@ -201,7 +219,6 @@ const MobileAccordion: React.FC<{
                 </span>
               </div>
 
-              {/* FIX: show X when open, Plus when closed */}
               <motion.span
                 animate={{ rotate: isActive ? 0 : 0 }}
                 className="text-accent flex-shrink-0"
@@ -221,11 +238,6 @@ const MobileAccordion: React.FC<{
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   style={{ overflow: "hidden" }}
                 >
-                  {/*
-                    FIX 3: entire expanded card is one big click zone that navigates.
-                    Use a <div role="button"> wrapping everything so the tap target
-                    is the full card body, not just a small CTA link.
-                  */}
                   <div
                     role="button"
                     tabIndex={0}
@@ -343,11 +355,8 @@ const MobileAccordion: React.FC<{
 };
 
 // =========================================================================
-// Desktop SpineCard
-// FIX: Hover — removed React.memo entirely so index prop always reflects
-//      the latest state. The GSAP flex animation is driven by a useEffect
-//      in the parent that runs synchronously whenever index changes.
-//      CSS-only hover overlay handled inline so it never fights GSAP.
+// Desktop SpineCard — UNCHANGED from original design intent.
+// The expansion failure was never in this component; it was in loadGsap above.
 // =========================================================================
 const SpineCard: React.FC<{
   c: Category;
@@ -382,14 +391,12 @@ const SpineCard: React.FC<{
             ? "opacity-100 scale-100 grayscale-0"
             : "opacity-35 scale-105 grayscale"
         }`}
-        // FIX: Remove Tailwind group-hover from className so it doesn't
-        // conflict. Handle hover via the CSS class below instead.
       />
 
       {/*
-        FIX desktop hover: separate overlay div handles the hover brightness
-        lift independently of isActive state — group-hover always fires
-        because this div is inside the button which IS the group root.
+        Hover overlay: dims inactive cards; fades out on group-hover so the
+        image brightens as a preview before the card fully expands.
+        Removed when active — the gradient scrim below takes over instead.
       */}
       {!isActive && (
         <div className="absolute inset-0 transition-all duration-500 ease-out opacity-100 group-hover:opacity-0 bg-background/65" />
@@ -510,7 +517,6 @@ const SpineCard: React.FC<{
 // Main Section
 // =========================================================================
 const Section: React.FC = () => {
-  // -1 = nothing open on mobile; desktop always has an active index
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const navigate = useNavigate();
@@ -555,7 +561,13 @@ const Section: React.FC = () => {
     return () => ctx?.revert();
   }, []);
 
-  // GSAP flex-grow animation — runs every time index changes
+  // GSAP flex-grow animation — runs every time index changes.
+  //
+  // BUG FIX: This useEffect was functionally dead after mount because
+  // loadGsap() returned `undefined` on every call past the first, causing
+  // the `if (!mods) return` guard to short-circuit all post-mount animations.
+  // Now that loadGsap() always returns the cached module, this correctly
+  // fires on every index change and expands the hovered/focused card.
   useEffect(() => {
     loadGsap().then((mods) => {
       if (!mods) return;
@@ -622,7 +634,7 @@ const Section: React.FC = () => {
         </span>
       </div>
 
-      {/* MOBILE */}
+      {/* MOBILE — untouched */}
       <MobileAccordion index={index} setIndex={setIndex} />
 
       {/* DESKTOP */}

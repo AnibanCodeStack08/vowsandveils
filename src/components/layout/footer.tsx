@@ -36,7 +36,7 @@ type SocialLink = {
 const SOCIAL_LINKS: SocialLink[] = [
   {
     name: "Instagram",
-    href: "https://www.instagram.com/vowsandveils.in?igsh=MXU5cGNvNm5jMGR5cA%3D%3D",
+    href: "https://www.instagram.com/vowsandveils.in/",
     Icon: InstagramIcon,
     gradient: "linear-gradient(135deg, #f9ce34 0%, #ee2a7b 45%, #6228d7 100%)",
     hoverGlow: "0 0 32px rgba(238, 42, 123, 0.55)",
@@ -50,7 +50,7 @@ const SOCIAL_LINKS: SocialLink[] = [
   },
   {
     name: "WhatsApp",
-    href: "https://wa.me/919867069643",
+    href: "https://wa.me/8670696443",
     Icon: WhatsAppIcon,
     gradient: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)",
     hoverGlow: "0 0 32px rgba(37, 211, 102, 0.55)",

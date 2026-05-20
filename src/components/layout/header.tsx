@@ -35,14 +35,12 @@ export function Header() {
   const goTo = (href: string) => {
     setOpen(false);
 
-    /* Route navigation — starts with "/" but is NOT just "/" with a hash */
     if (href.startsWith("/") && !href.startsWith("/#")) {
       navigate(href);
       window.scrollTo({ top: 0, behavior: "instant" });
       return;
     }
 
-    /* Section scroll (hash links) */
     const scrollToSection = () => {
       const id = href.replace("#", "").replace("/#", "");
       const el = document.getElementById(id);
@@ -51,7 +49,6 @@ export function Header() {
       }
     };
 
-    /* If not on homepage, navigate home first, then scroll */
     if (location.pathname !== "/") {
       navigate("/");
       setTimeout(() => scrollToSection(), 300);
@@ -61,7 +58,7 @@ export function Header() {
   };
 
   const openWhatsApp = () => {
-    window.open("https://wa.me/919867069643", "_blank", "noopener,noreferrer");
+    window.open("https://wa.me/8670696443", "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -115,30 +112,42 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Hire Me button — always visible */}
+        {/* Get In Touch button — always visible on desktop */}
         <button
           onClick={openWhatsApp}
-          aria-label="Hire Me on WhatsApp"
+          aria-label="Get In Touch on WhatsApp"
+          style={{
+            border: "1px solid rgba(120,66,2,0.75)",
+            color: "rgb(200,130,60)",
+            background: "rgba(120,66,2,0.12)",
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget;
+            el.style.background = "rgba(120,66,2,0.28)";
+            el.style.borderColor = "rgba(120,66,2,1)";
+            el.style.color = "rgb(230,160,80)";
+            el.style.boxShadow = "0 0 16px rgba(120,66,2,0.45)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget;
+            el.style.background = "rgba(120,66,2,0.12)";
+            el.style.borderColor = "rgba(120,66,2,0.75)";
+            el.style.color = "rgb(200,130,60)";
+            el.style.boxShadow = "none";
+          }}
           className="
             shrink-0
             px-3 py-1.5
             sm:px-4 sm:py-2
             text-[0.6rem] sm:text-[0.65rem]
-            tracking-[0.2em] sm:tracking-[0.28em]
+            tracking-[0.2em] sm:tracking-[0.24em]
             uppercase font-semibold
             rounded-full
-            border border-emerald-500/70
-            text-emerald-400
-            bg-emerald-500/10
-            hover:bg-emerald-500/25
-            hover:border-emerald-400
-            hover:text-emerald-300
-            hover:shadow-[0_0_14px_rgba(52,211,153,0.35)]
             transition-all duration-300
             whitespace-nowrap
           "
         >
-          Hire Me
+          Get In Touch
         </button>
 
         {/* Mobile menu toggle */}
@@ -165,11 +174,16 @@ export function Header() {
               </button>
             ))}
 
-            {/* Hire Me inside mobile menu */}
+            {/* Get In Touch inside mobile menu */}
             <button
               onClick={() => {
                 setOpen(false);
                 openWhatsApp();
+              }}
+              style={{
+                border: "1px solid rgba(120,66,2,0.75)",
+                color: "rgb(200,130,60)",
+                background: "rgba(120,66,2,0.12)",
               }}
               className="
                 mt-2 self-start
@@ -177,16 +191,10 @@ export function Header() {
                 text-[0.65rem] tracking-[0.28em]
                 uppercase font-semibold
                 rounded-full
-                border border-emerald-500/70
-                text-emerald-400
-                bg-emerald-500/10
-                hover:bg-emerald-500/25
-                hover:border-emerald-400
-                hover:text-emerald-300
                 transition-all duration-300
               "
             >
-              Hire Me
+              Get In Touch
             </button>
           </nav>
         </div>
