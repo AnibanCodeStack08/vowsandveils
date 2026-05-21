@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const img1  = "/images/baby/img1.jpg";
@@ -163,22 +164,12 @@ export default function Baby({
         if (pending === 0) setRatios({ ...map });
       };
 
-      el.onload = () => {
-        map[img.src] = el.naturalHeight / el.naturalWidth;
-        done();
-      };
-
-      el.onerror = () => {
-        map[img.src] = 1.33;
-        done();
-      };
-
+      el.onload  = () => { map[img.src] = el.naturalHeight / el.naturalWidth; done(); };
+      el.onerror = () => { map[img.src] = 1.33; done(); };
       el.src = img.src;
     });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [images]);
 
   // ── Greedy bin-pack ─────────────────────────────────────────────────────
@@ -194,13 +185,10 @@ export default function Baby({
 
     images.forEach((img, idx) => {
       const r = ratios[img.src];
-
       let t = 0;
-
       for (let i = 1; i < cols.length; i++) {
         if (cols[i].h < cols[t].h) t = i;
       }
-
       cols[t].items.push(idx);
       cols[t].h += r;
     });
@@ -215,40 +203,13 @@ export default function Baby({
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
 
-      tl.from(".by-top-rule", {
-        scaleX: 0,
-        duration: 1.6,
-        transformOrigin: "center",
-      }, 0)
-        .from(".by-eyebrow", {
-          opacity: 0,
-          y: -10,
-          duration: 1,
-        }, 0.15)
-        .from(".by-title", {
-          opacity: 0,
-          y: 28,
-          duration: 1.4,
-        }, 0.28)
-        .from(".by-subtitle", {
-          opacity: 0,
-          y: 14,
-          duration: 1.1,
-        }, 0.5)
-        .from(".by-bot-rule", {
-          scaleX: 0,
-          duration: 1.4,
-          transformOrigin: "center",
-        }, 0.55)
-        .from(".by-desc", {
-          opacity: 0,
-          y: 10,
-          duration: 1,
-        }, 0.7)
-        .from(".by-meta", {
-          opacity: 0,
-          duration: 0.9,
-        }, 0.85);
+      tl.from(".by-top-rule", { scaleX: 0,  duration: 1.6, transformOrigin: "center" }, 0)
+        .from(".by-eyebrow",  { opacity: 0, y: -10, duration: 1 }, 0.15)
+        .from(".by-title",    { opacity: 0, y: 28,  duration: 1.4 }, 0.28)
+        .from(".by-subtitle", { opacity: 0, y: 14,  duration: 1.1 }, 0.5)
+        .from(".by-bot-rule", { scaleX: 0,  duration: 1.4, transformOrigin: "center" }, 0.55)
+        .from(".by-desc",     { opacity: 0, y: 10,  duration: 1 }, 0.7)
+        .from(".by-meta",     { opacity: 0,          duration: 0.9 }, 0.85);
     }, headingRef);
 
     return () => ctx.revert();
@@ -271,9 +232,9 @@ export default function Baby({
     if (activeIndex === null) return;
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape")     close();
       if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowLeft")  prev();
     };
 
     window.addEventListener("keydown", onKey);
@@ -542,14 +503,109 @@ export default function Baby({
 
         <LozengeDivider className="mt-14 sm:mt-16 opacity-20" />
       </div>
+
+      {/* ── LIGHTBOX ────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {activeIndex !== null && (
+          <motion.div
+            key="lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/96 backdrop-blur-lg"
+            onClick={close}
+          >
+            {/* Close */}
+            <button
+              onClick={(e) => { e.stopPropagation(); close(); }}
+              className="absolute top-5 right-5 z-10 p-2 text-foreground/45 transition-colors hover:text-foreground"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Counter */}
+            <div
+              className="absolute top-6 left-1/2 -translate-x-1/2 tracking-[0.35em] text-xs uppercase select-none"
+              style={{ color: "color-mix(in oklab, var(--color-foreground) 38%, transparent)" }}
+            >
+              {String(activeIndex + 1).padStart(2, "0")}
+              <span
+                className="mx-2"
+                style={{ color: "color-mix(in oklab, var(--color-foreground) 16%, transparent)" }}
+              >
+                /
+              </span>
+              {String(images.length).padStart(2, "0")}
+            </div>
+
+            {/* Prev */}
+            <button
+              onClick={(e) => { e.stopPropagation(); prev(); }}
+              className="absolute left-3 sm:left-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
+              aria-label="Previous"
+            >
+              <ChevronLeft size={26} />
+            </button>
+
+            {/* Image + caption */}
+            <div
+              className="relative max-h-[80vh] max-w-[88vw] sm:max-w-[76vw] flex flex-col items-center gap-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={images[activeIndex].src}
+                  src={images[activeIndex].src}
+                  alt={images[activeIndex].alt}
+                  initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                  animate={{ opacity: 1, scale: 1,    y: 0 }}
+                  exit={{    opacity: 0, scale: 0.97, y: -10 }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  className="max-h-[74vh] max-w-full object-contain"
+                  style={{
+                    boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)",
+                  }}
+                  draggable={false}
+                />
+              </AnimatePresence>
+
+              {/* Caption */}
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={images[activeIndex].alt}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{    opacity: 0, y: -5 }}
+                  transition={{ duration: 0.35, delay: 0.1 }}
+                  className="italic text-xs sm:text-sm text-center"
+                  style={{ color: "color-mix(in oklab, var(--color-foreground) 36%, transparent)" }}
+                >
+                  {images[activeIndex].alt}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+
+            {/* Next */}
+            <button
+              onClick={(e) => { e.stopPropagation(); next(); }}
+              className="absolute right-3 sm:right-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
+              aria-label="Next"
+            >
+              <ChevronRight size={26} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
 // ── Tile ──────────────────────────────────────────────────────────────────────
 interface TileProps {
-  image: BabyImage;
-  index: number;
+  image:   BabyImage;
+  index:   number;
   isLast?: boolean;
   onClick: () => void;
 }
