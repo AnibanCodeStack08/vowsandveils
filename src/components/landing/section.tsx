@@ -34,7 +34,7 @@ const g4 = "/images/adhibash/img6.jpeg";
 const g5 = "/images/engagement/img3.jpeg";
 const g6 = "/images/wedding/img18.jpg";
 const haldi1 = "/images/haldi/img14.jpeg";
-const baby = "/images/baby/img1.jpg";
+const baby = "/images/baby/img31.jpg";
 
 // -------------------- Types & Data --------------------
 type Category = {
