@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const img1  = "/images/adhibash/img1.jpeg";
 const img2  = "/images/adhibash/img2.jpeg";
@@ -113,6 +114,8 @@ export default function Adhibash({
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
 
+  const navigate = useNavigate();
+
   // ── Responsive column count ─────────────────────────────────────────────
   useEffect(() => {
     const compute = () => {
@@ -129,73 +132,135 @@ export default function Adhibash({
     let cancelled = false;
     const map: Record<string, number> = {};
     let pending = images.length;
+
     images.forEach((img) => {
       const el = new window.Image();
+
       const done = () => {
         if (cancelled) return;
         pending--;
         if (pending === 0) setRatios({ ...map });
       };
-      el.onload  = () => { map[img.src] = el.naturalHeight / el.naturalWidth; done(); };
-      el.onerror = () => { map[img.src] = 1.33; done(); };
+
+      el.onload = () => {
+        map[img.src] = el.naturalHeight / el.naturalWidth;
+        done();
+      };
+
+      el.onerror = () => {
+        map[img.src] = 1.33;
+        done();
+      };
+
       el.src = img.src;
     });
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [images]);
 
   // ── Greedy bin-pack ─────────────────────────────────────────────────────
   const columns: number[][] = (() => {
-    if (!ratiosReady) return Array.from({ length: colCount }, () => [] as number[]);
+    if (!ratiosReady) {
+      return Array.from({ length: colCount }, () => [] as number[]);
+    }
+
     const cols: { items: number[]; h: number }[] = Array.from(
       { length: colCount },
       () => ({ items: [], h: 0 }),
     );
+
     images.forEach((img, idx) => {
       const r = ratios[img.src];
+
       let t = 0;
-      for (let i = 1; i < cols.length; i++) if (cols[i].h < cols[t].h) t = i;
+      for (let i = 1; i < cols.length; i++) {
+        if (cols[i].h < cols[t].h) t = i;
+      }
+
       cols[t].items.push(idx);
       cols[t].h += r;
     });
+
     return cols.map((c) => c.items);
   })();
 
   // ── GSAP heading entrance ───────────────────────────────────────────────
   useEffect(() => {
     if (!headingRef.current) return;
+
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.from(".adh-top-rule",  { scaleX: 0,  duration: 1.6, transformOrigin: "center" }, 0)
-        .from(".adh-eyebrow",   { opacity: 0, y: -10, duration: 1 }, 0.15)
-        .from(".adh-title",     { opacity: 0, y: 28,  duration: 1.4 }, 0.28)
-        .from(".adh-subtitle",  { opacity: 0, y: 14,  duration: 1.1 }, 0.5)
-        .from(".adh-bot-rule",  { scaleX: 0,  duration: 1.4, transformOrigin: "center" }, 0.55)
-        .from(".adh-desc",      { opacity: 0, y: 10,  duration: 1 }, 0.7)
-        .from(".adh-meta",      { opacity: 0,          duration: 0.9 }, 0.85);
+      const tl = gsap.timeline({
+        defaults: { ease: "expo.out" },
+      });
+
+      tl.from(".adh-top-rule", {
+        scaleX: 0,
+        duration: 1.6,
+        transformOrigin: "center",
+      }, 0)
+        .from(".adh-eyebrow", {
+          opacity: 0,
+          y: -10,
+          duration: 1,
+        }, 0.15)
+        .from(".adh-title", {
+          opacity: 0,
+          y: 28,
+          duration: 1.4,
+        }, 0.28)
+        .from(".adh-subtitle", {
+          opacity: 0,
+          y: 14,
+          duration: 1.1,
+        }, 0.5)
+        .from(".adh-bot-rule", {
+          scaleX: 0,
+          duration: 1.4,
+          transformOrigin: "center",
+        }, 0.55)
+        .from(".adh-desc", {
+          opacity: 0,
+          y: 10,
+          duration: 1,
+        }, 0.7)
+        .from(".adh-meta", {
+          opacity: 0,
+          duration: 0.9,
+        }, 0.85);
     }, headingRef);
+
     return () => ctx.revert();
   }, []);
 
   // ── Lightbox controls ───────────────────────────────────────────────────
   const close = useCallback(() => setActiveIndex(null), []);
-  const next  = useCallback(
+
+  const next = useCallback(
     () => setActiveIndex((i) => (i === null ? i : (i + 1) % images.length)),
     [images.length],
   );
-  const prev  = useCallback(
-    () => setActiveIndex((i) => (i === null ? i : (i - 1 + images.length) % images.length)),
+
+  const prev = useCallback(
+    () => setActiveIndex((i) => (
+      i === null ? i : (i - 1 + images.length) % images.length
+    )),
     [images.length],
   );
 
   useEffect(() => {
     if (activeIndex === null) return;
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape")     close();
+      if (e.key === "Escape") close();
       if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft")  prev();
+      if (e.key === "ArrowLeft") prev();
     };
+
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
+
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
@@ -210,7 +275,6 @@ export default function Adhibash({
     >
       {/* ── Backgrounds ──────────────────────────────────────────────────── */}
 
-      {/* Wide centred glow */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[640px]"
@@ -220,7 +284,6 @@ export default function Adhibash({
         }}
       />
 
-      {/* Faint concentric ring motif */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.045]"
@@ -231,7 +294,8 @@ export default function Adhibash({
             key={i}
             className="absolute inset-0 rounded-full"
             style={{
-              border: "1px solid color-mix(in oklab, var(--color-gold) 100%, transparent)",
+              border:
+                "1px solid color-mix(in oklab, var(--color-gold) 100%, transparent)",
               transform: `scale(${scale})`,
               top: "50%",
               left: "50%",
@@ -244,7 +308,6 @@ export default function Adhibash({
         ))}
       </div>
 
-      {/* Dot grid */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.028] mix-blend-screen"
@@ -255,24 +318,24 @@ export default function Adhibash({
         }}
       />
 
-      {/* ── HEADER — centred, padded ──────────────────────────────────────── */}
+      {/* ── HEADER ───────────────────────────────────────────────────────── */}
       <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
         <div
           ref={headingRef}
           className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
         >
-          {/* Top lozenge rule */}
           <LozengeDivider className="adh-top-rule max-w-2xl" />
 
-          {/* Eyebrow */}
           <p
             className="adh-eyebrow tracking-[0.42em] uppercase text-[10px] sm:text-xs mt-2"
-            style={{ color: "color-mix(in oklab, var(--color-gold) 72%, transparent)" }}
+            style={{
+              color:
+                "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+            }}
           >
             {eyebrow}
           </p>
 
-          {/* Main title */}
           <h2
             className="adh-title font-display leading-[0.95]"
             style={{
@@ -285,71 +348,40 @@ export default function Adhibash({
             {title}
           </h2>
 
-          {/* Subtitle */}
           <p
             className="adh-subtitle font-display italic"
             style={{
               fontSize: "clamp(1rem, 2.2vw, 1.6rem)",
               fontWeight: 300,
               letterSpacing: "0.01em",
-              color: "color-mix(in oklab, var(--color-foreground) 55%, transparent)",
+              color:
+                "color-mix(in oklab, var(--color-foreground) 55%, transparent)",
               maxWidth: "44ch",
             }}
           >
             {subtitle}
           </p>
 
-          {/* Bottom lozenge rule */}
           <LozengeDivider className="adh-bot-rule max-w-xs opacity-60 mt-1" />
 
-          {/* Description */}
           <p
             className="adh-desc text-sm sm:text-base leading-relaxed"
             style={{
-              color: "color-mix(in oklab, var(--color-foreground) 42%, transparent)",
+              color:
+                "color-mix(in oklab, var(--color-foreground) 42%, transparent)",
               maxWidth: "52ch",
             }}
           >
             {description}
           </p>
 
-          {/* Meta row */}
           <div className="adh-meta flex items-center justify-center gap-4 flex-wrap">
-            {date && (
-              <span
-                className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
-                style={{ color: "color-mix(in oklab, var(--color-gold) 62%, transparent)" }}
-              >
-                {date}
-              </span>
-            )}
-            {date && location && (
-              <span
-                aria-hidden
-                style={{ color: "color-mix(in oklab, var(--color-gold) 28%, transparent)" }}
-              >
-                ·
-              </span>
-            )}
-            {location && (
-              <span
-                className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
-                style={{ color: "color-mix(in oklab, var(--color-gold) 62%, transparent)" }}
-              >
-                {location}
-              </span>
-            )}
-            {(date || location) && (
-              <span
-                aria-hidden
-                style={{ color: "color-mix(in oklab, var(--color-gold) 28%, transparent)" }}
-              >
-                ·
-              </span>
-            )}
             <span
               className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
-              style={{ color: "color-mix(in oklab, var(--color-foreground) 28%, transparent)" }}
+              style={{
+                color:
+                  "color-mix(in oklab, var(--color-foreground) 28%, transparent)",
+              }}
             >
               {String(images.length).padStart(2, "0")} frames
             </span>
@@ -357,11 +389,13 @@ export default function Adhibash({
         </div>
       </div>
 
-      {/* ── MASONRY GRID — full bleed, no side padding ────────────────────── */}
+      {/* ── GRID ─────────────────────────────────────────────────────────── */}
       <div className="relative w-full">
         <div
           className="grid items-stretch gap-[3px]"
-          style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+          style={{
+            gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
+          }}
         >
           {columns.map((colIndices, ci) => (
             <div key={ci} className="flex h-full flex-col gap-[3px]">
@@ -377,21 +411,79 @@ export default function Adhibash({
             </div>
           ))}
         </div>
-
-        {/* Preload all images */}
-        <div aria-hidden className="sr-only absolute w-0 h-0 overflow-hidden">
-          {images.map((img, i) => (
-            <img key={i} src={img.src} alt="" />
-          ))}
-        </div>
       </div>
 
-      {/* ── BOTTOM RULE — padded to match header ─────────────────────────── */}
+      {/* ── BOTTOM RULE + CTA ───────────────────────────────────────────── */}
       <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
+
+        {/* Back CTA */}
+        <div className="mt-14 sm:mt-16 flex justify-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="group relative inline-flex items-center gap-3 overflow-hidden px-9 py-4 text-xs tracking-[0.38em] uppercase transition-all duration-500"
+            style={{
+              border:
+                "1px solid color-mix(in oklab, var(--color-gold) 38%, transparent)",
+              color:
+                "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+              background: "transparent",
+            }}
+          >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0"
+              style={{
+                background:
+                  "linear-gradient(105deg, color-mix(in oklab, var(--color-gold) 10%, transparent), color-mix(in oklab, var(--color-gold) 6%, transparent))",
+              }}
+            />
+
+            <svg
+              aria-hidden
+              viewBox="0 0 20 20"
+              width="14"
+              height="14"
+              fill="none"
+              className="relative transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-x-1"
+              style={{
+                stroke:
+                  "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+              }}
+            >
+              <path
+                d="M13 4L7 10L13 16"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span className="relative">Return to memories</span>
+
+            {[
+              "top-0 left-0 border-t border-l",
+              "top-0 right-0 border-t border-r",
+              "bottom-0 left-0 border-b border-l",
+              "bottom-0 right-0 border-b border-r",
+            ].map((cls, i) => (
+              <span
+                key={i}
+                aria-hidden
+                className={`pointer-events-none absolute ${cls} h-2.5 w-2.5 opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
+                style={{
+                  borderColor:
+                    "color-mix(in oklab, var(--color-gold) 80%, transparent)",
+                }}
+              />
+            ))}
+          </button>
+        </div>
+
+        <LozengeDivider className="mt-14 sm:mt-16 opacity-20" />
       </div>
 
-      {/* ── LIGHTBOX ────────────────────────────────────────────────────────── */}
+      {/* ── LIGHTBOX ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {activeIndex !== null && (
           <motion.div
@@ -399,84 +491,75 @@ export default function Adhibash({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              duration: 0.3,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/96 backdrop-blur-lg"
             onClick={close}
           >
-            {/* Close */}
             <button
-              onClick={(e) => { e.stopPropagation(); close(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                close();
+              }}
               className="absolute top-5 right-5 z-10 p-2 text-foreground/45 transition-colors hover:text-foreground"
               aria-label="Close"
             >
               <X size={20} />
             </button>
 
-            {/* Counter */}
-            <div
-              className="absolute top-6 left-1/2 -translate-x-1/2 tracking-[0.35em] text-xs uppercase select-none"
-              style={{ color: "color-mix(in oklab, var(--color-foreground) 38%, transparent)" }}
-            >
-              {String(activeIndex + 1).padStart(2, "0")}
-              <span
-                className="mx-2"
-                style={{ color: "color-mix(in oklab, var(--color-foreground) 16%, transparent)" }}
-              >
-                /
-              </span>
-              {String(images.length).padStart(2, "0")}
-            </div>
-
-            {/* Prev */}
             <button
-              onClick={(e) => { e.stopPropagation(); prev(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                prev();
+              }}
               className="absolute left-3 sm:left-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
               aria-label="Previous"
             >
               <ChevronLeft size={26} />
             </button>
 
-            {/* Image + caption */}
             <div
               className="relative max-h-[80vh] max-w-[88vw] sm:max-w-[76vw] flex flex-col items-center gap-5"
               onClick={(e) => e.stopPropagation()}
             >
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={images[activeIndex].src}
-                  src={images[activeIndex].src}
-                  alt={images[activeIndex].alt}
-                  initial={{ opacity: 0, scale: 0.97, y: 10 }}
-                  animate={{ opacity: 1, scale: 1,    y: 0 }}
-                  exit={{    opacity: 0, scale: 0.97, y: -10 }}
-                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                  className="max-h-[74vh] max-w-full object-contain"
-                  style={{
-                    boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)",
-                  }}
-                  draggable={false}
-                />
-              </AnimatePresence>
+              <motion.img
+                key={images[activeIndex].src}
+                src={images[activeIndex].src}
+                alt={images[activeIndex].alt}
+                initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, y: -10 }}
+                transition={{
+                  duration: 0.45,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="max-h-[74vh] max-w-full object-contain"
+                draggable={false}
+              />
 
-              {/* Caption */}
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={images[activeIndex].alt}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{    opacity: 0, y: -5 }}
-                  transition={{ duration: 0.35, delay: 0.1 }}
-                  className="italic text-xs sm:text-sm text-center"
-                  style={{ color: "color-mix(in oklab, var(--color-foreground) 36%, transparent)" }}
-                >
-                  {images[activeIndex].alt}
-                </motion.p>
-              </AnimatePresence>
+              <motion.p
+                key={images[activeIndex].alt}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.35, delay: 0.1 }}
+                className="italic text-xs sm:text-sm text-center"
+                style={{
+                  color:
+                    "color-mix(in oklab, var(--color-foreground) 36%, transparent)",
+                }}
+              >
+                {images[activeIndex].alt}
+              </motion.p>
             </div>
 
-            {/* Next */}
             <button
-              onClick={(e) => { e.stopPropagation(); next(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                next();
+              }}
               className="absolute right-3 sm:right-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
               aria-label="Next"
             >
@@ -489,17 +572,18 @@ export default function Adhibash({
   );
 }
 
-// ── Tile ──────────────────────────────────────────────────────────────────────
+// ── Tile ──────────────────────────────────────────────────────────────────
 interface TileProps {
-  image:    AdhibashImage;
-  index:    number;
-  isLast?:  boolean;
-  onClick:  () => void;
+  image: AdhibashImage;
+  index: number;
+  isLast?: boolean;
+  onClick: () => void;
 }
 
 function Tile({ image, index, isLast = false, onClick }: TileProps) {
   const isLastCls = isLast ? " flex-1 flex flex-col" : "";
-  const imgCls    = isLast
+
+  const imgCls = isLast
     ? "block w-full flex-1 h-0 min-h-0 object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]"
     : "block h-auto w-full object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]";
 
@@ -518,7 +602,6 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
       className={`group relative block w-full overflow-hidden bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-gold hover:z-10${isLastCls}`}
       aria-label={`Open photo: ${image.alt}`}
     >
-      {/* Photo */}
       <img
         src={image.src}
         alt={image.alt}
@@ -527,7 +610,6 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
         className={imgCls}
       />
 
-      {/* Inner glow on hover */}
       <div
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
         style={{
@@ -536,7 +618,6 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
         }}
       />
 
-      {/* Caption slide-up */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-[480ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
         style={{
@@ -549,7 +630,10 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
       >
         <p
           className="text-xs italic leading-snug"
-          style={{ color: "color-mix(in oklab, var(--color-foreground) 65%, transparent)" }}
+          style={{
+            color:
+              "color-mix(in oklab, var(--color-foreground) 65%, transparent)",
+          }}
         >
           {image.alt}
         </p>

@@ -25,6 +25,19 @@ const WhatsAppIcon = ({ className }: { className?: string; strokeWidth?: number 
   </svg>
 );
 
+function YouTubeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.5 12 3.5 12 3.5s-7.6 0-9.4.6A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.8.6 9.4.6 9.4.6s7.6 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8ZM9.75 15.5v-7l6 3.5-6 3.5Z" />
+    </svg>
+  );
+}
+
 type SocialLink = {
   name: string;
   href: string;
@@ -54,6 +67,13 @@ const SOCIAL_LINKS: SocialLink[] = [
     Icon: WhatsAppIcon,
     gradient: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)",
     hoverGlow: "0 0 32px rgba(37, 211, 102, 0.55)",
+  },
+  {
+    name: "YouTube",
+    href: "https://www.youtube.com/@SantanuDasPhotography23",
+    Icon: YouTubeIcon,
+    gradient: "linear-gradient(135deg, #ff0000 0%, #cc0000 100%)",
+    hoverGlow: "0 0 32px rgba(255, 0, 0, 0.55)",
   },
 ];
 

@@ -193,7 +193,7 @@ export default function Contact() {
             </span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-balance text-sm md:text-base text-muted-foreground">
-            From first looks to last dances — Vows&amp;Veils captures the moments
+            From first looks to last dances — Vows &amp; Veils captures the moments
             between the moments. Reach out and let's begin.
           </p>
         </div>
@@ -210,7 +210,7 @@ export default function Contact() {
             <div>
               <p className="hairline text-muted-foreground mb-3">Studio</p>
               <h3 className="font-display text-3xl md:text-4xl text-foreground">
-                Vows<span className="text-gold">&amp;</span>Veils
+                Vows<span className="text-gold"> &amp; </span>Veils
               </h3>
             </div>
 

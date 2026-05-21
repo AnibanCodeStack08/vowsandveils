@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const img1  = "/images/wedding/img1.jpg";
 const img2  = "/images/wedding/img2.jpg";
@@ -162,6 +163,8 @@ export default function Wedding({
 
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
+
+  const navigate = useNavigate();
 
   // ── Responsive column count ─────────────────────────────────────────────
   useEffect(() => {
@@ -436,9 +439,75 @@ export default function Wedding({
         </div>
       </div>
 
-      {/* ── BOTTOM RULE — padded to match header ─────────────────────────── */}
+      {/* ── BOTTOM RULE + CTA ─────────────────────────────────────────────── */}
       <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
+
+        {/* Back CTA */}
+        <div className="mt-14 sm:mt-16 flex justify-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="group relative inline-flex items-center gap-3 overflow-hidden px-9 py-4 text-xs tracking-[0.38em] uppercase transition-all duration-500"
+            style={{
+              border:
+                "1px solid color-mix(in oklab, var(--color-gold) 38%, transparent)",
+              color: "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+              background: "transparent",
+            }}
+          >
+            {/* Shimmer fill on hover */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0"
+              style={{
+                background:
+                  "linear-gradient(105deg, color-mix(in oklab, var(--color-gold) 10%, transparent), color-mix(in oklab, var(--color-gold) 6%, transparent))",
+              }}
+            />
+
+            {/* Arrow */}
+            <svg
+              aria-hidden
+              viewBox="0 0 20 20"
+              width="14"
+              height="14"
+              fill="none"
+              className="relative transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-x-1"
+              style={{
+                stroke: "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+              }}
+            >
+              <path
+                d="M13 4L7 10L13 16"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span className="relative">Return to memories</span>
+
+            {/* Corner accents */}
+            {[
+              "top-0 left-0 border-t border-l",
+              "top-0 right-0 border-t border-r",
+              "bottom-0 left-0 border-b border-l",
+              "bottom-0 right-0 border-b border-r",
+            ].map((cls, i) => (
+              <span
+                key={i}
+                aria-hidden
+                className={`pointer-events-none absolute ${cls} h-2.5 w-2.5 opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
+                style={{
+                  borderColor:
+                    "color-mix(in oklab, var(--color-gold) 80%, transparent)",
+                }}
+              />
+            ))}
+          </button>
+        </div>
+
+        <LozengeDivider className="mt-14 sm:mt-16 opacity-20" />
       </div>
 
       {/* ── LIGHTBOX ────────────────────────────────────────────────────────── */}

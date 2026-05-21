@@ -11,26 +11,9 @@ import { ArrowUpRight, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-// ---- Lazy GSAP (avoids blocking first paint) ----
-//
-// BUG FIX (PRIMARY — desktop hover expansion broken):
-// The original `loadGsap` used a boolean flag `gsapLoaded` and returned nothing
-// (`return;`) on subsequent calls after the first load. This caused every call
-// after the initial load to resolve with `undefined`, making the guard
-// `if (!mods) return` in the flex-grow useEffect bail out silently.
-//
-// Result: card 0 expanded correctly on mount (first call → GSAP loads → returns
-// the module), but every subsequent hover triggered a state change that ran the
-// useEffect, called loadGsap(), received `undefined`, and exited immediately.
-// No cards ever expanded on hover.
-//
-// FIX: Cache the entire { gsap, ScrollTrigger } object and always return it,
-// so every call after the first load returns the live module reference.
 let gsapCache: { gsap: any; ScrollTrigger: any } | null = null;
 
 const loadGsap = async () => {
-  // Already loaded — return the cached instance immediately.
-  // Previously this path returned `undefined`, breaking all post-mount animations.
   if (gsapCache) return gsapCache;
 
   const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
@@ -39,7 +22,6 @@ const loadGsap = async () => {
   ]);
   gsap.registerPlugin(ScrollTrigger);
 
-  // Store the live references so future calls get them back
   gsapCache = { gsap, ScrollTrigger };
   return gsapCache;
 };
@@ -98,7 +80,7 @@ const CATEGORIES: Category[] = [
   },
   {
     name: "Engagement",
-    tagline: "Henna · songs · sisterhood",
+    tagline: "Rings · glances · new beginnings", // ← updated
     description:
       "Inked promises drying slow — a courtyard full of women, music and mischief.",
     image: g5,
@@ -174,7 +156,7 @@ const LazyImage = memo(
 );
 
 // =========================================================================
-// Mobile Accordion — UNCHANGED (working correctly)
+// Mobile Accordion
 // =========================================================================
 const MobileAccordion: React.FC<{
   index: number;
@@ -192,14 +174,13 @@ const MobileAccordion: React.FC<{
             key={c.name}
             className="relative rounded-sm ring-1 ring-accent/20 bg-card overflow-hidden"
           >
-            {/* ---- Header — always visible, toggles open/close ---- */}
+            {/* ---- Header ---- */}
             <button
               onClick={() => setIndex(isActive ? -1 : i)}
               aria-expanded={isActive}
               aria-label={isActive ? `Close ${c.name}` : `Open ${c.name}`}
               className="relative w-full flex items-center justify-between px-4 py-3 z-10"
             >
-              {/* Accent left rule */}
               <span
                 className={`absolute left-0 top-0 bottom-0 w-0.5 transition-colors duration-400 ${
                   isActive ? "bg-accent" : "bg-accent/25"
@@ -227,7 +208,7 @@ const MobileAccordion: React.FC<{
               </motion.span>
             </button>
 
-            {/* ---- Expandable body — clicking anywhere navigates ---- */}
+            {/* ---- Expandable body ---- */}
             <AnimatePresence initial={false}>
               {isActive && (
                 <motion.div
@@ -259,7 +240,6 @@ const MobileAccordion: React.FC<{
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
 
-                      {/* Floating navigate hint top-right */}
                       <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-background/60 backdrop-blur-sm rounded-full px-3 py-1.5">
                         <span className="hairline text-foreground/80 text-[10px] tracking-widest uppercase">
                           View gallery
@@ -291,17 +271,9 @@ const MobileAccordion: React.FC<{
                         className="h-px w-12 bg-accent my-2.5"
                       />
 
-                      <p className="text-foreground/75 text-sm leading-relaxed mb-4">
+                      <p className="text-foreground/75 text-sm leading-relaxed">
                         {c.description}
                       </p>
-
-                      <div className="inline-flex items-center gap-2.5 text-foreground">
-                        <span className="hairline text-xs tracking-widest uppercase">
-                          Open volume
-                        </span>
-                        <span className="h-px w-8 bg-foreground/40" />
-                        <ArrowUpRight size={14} className="text-accent" />
-                      </div>
                     </motion.div>
                   </div>
                 </motion.div>
@@ -355,8 +327,7 @@ const MobileAccordion: React.FC<{
 };
 
 // =========================================================================
-// Desktop SpineCard — UNCHANGED from original design intent.
-// The expansion failure was never in this component; it was in loadGsap above.
+// Desktop SpineCard
 // =========================================================================
 const SpineCard: React.FC<{
   c: Category;
@@ -393,16 +364,10 @@ const SpineCard: React.FC<{
         }`}
       />
 
-      {/*
-        Hover overlay: dims inactive cards; fades out on group-hover so the
-        image brightens as a preview before the card fully expands.
-        Removed when active — the gradient scrim below takes over instead.
-      */}
       {!isActive && (
         <div className="absolute inset-0 transition-all duration-500 ease-out opacity-100 group-hover:opacity-0 bg-background/65" />
       )}
 
-      {/* Active gradient scrim */}
       {isActive && (
         <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent" />
       )}
@@ -434,7 +399,7 @@ const SpineCard: React.FC<{
         />
       </div>
 
-      {/* Active panel content */}
+      {/* Active panel content — "Open this volume" CTA removed */}
       <AnimatePresence>
         {isActive && (
           <motion.div
@@ -489,22 +454,6 @@ const SpineCard: React.FC<{
               >
                 {c.description}
               </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: 0.68 }}
-                className="group/cta mt-8 inline-flex items-center gap-3 text-foreground"
-              >
-                <span className="hairline">Open this volume</span>
-                <span className="relative h-px w-12 bg-foreground/40 overflow-hidden">
-                  <span className="absolute inset-y-0 left-0 w-full bg-accent origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out" />
-                </span>
-                <ArrowUpRight
-                  size={18}
-                  className="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                />
-              </motion.div>
             </div>
           </motion.div>
         )}
@@ -561,13 +510,7 @@ const Section: React.FC = () => {
     return () => ctx?.revert();
   }, []);
 
-  // GSAP flex-grow animation — runs every time index changes.
-  //
-  // BUG FIX: This useEffect was functionally dead after mount because
-  // loadGsap() returned `undefined` on every call past the first, causing
-  // the `if (!mods) return` guard to short-circuit all post-mount animations.
-  // Now that loadGsap() always returns the cached module, this correctly
-  // fires on every index change and expands the hovered/focused card.
+  // GSAP flex-grow animation
   useEffect(() => {
     loadGsap().then((mods) => {
       if (!mods) return;
@@ -583,9 +526,10 @@ const Section: React.FC = () => {
     });
   }, [index]);
 
-  // Auto-advance (desktop only, paused on hover)
+  // Auto-advance — desktop only (disabled on mobile viewports)
   useEffect(() => {
-    if (paused) return;
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    if (!isDesktop || paused) return;
     const id = window.setInterval(
       () => setIndex((i) => (i + 1) % CATEGORIES.length),
       5200
@@ -634,7 +578,7 @@ const Section: React.FC = () => {
         </span>
       </div>
 
-      {/* MOBILE — untouched */}
+      {/* MOBILE */}
       <MobileAccordion index={index} setIndex={setIndex} />
 
       {/* DESKTOP */}

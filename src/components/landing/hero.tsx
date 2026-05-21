@@ -145,24 +145,19 @@ function Hero() {
           object-position: center;
         }
 
-        /* ── Mobile cinematic landscape frame ─────────────────────────── */
+        /* ── Mobile ────────────────────────────────────────────────────── */
         @media (max-width: 1024px) {
           #home.hero-section {
             position: relative;
             width: 100%;
             height: 28vh;
-            background: #000;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
           }
 
           #home.hero-section video {
             width: 100%;
-            height: auto;
-            aspect-ratio: 16 / 9;
-            object-fit: contain;
+            height: 100%;
+            object-fit: cover;
             object-position: center;
           }
         }

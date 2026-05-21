@@ -80,7 +80,7 @@ const Collage = () => {
       {/* Collage */}
       <motion.div
         ref={gridRef}
-        className="grid grid-cols-3 md:grid-cols-5 w-full"  // 👈 only change
+        className="grid grid-cols-3 md:grid-cols-5 w-full"
         style={{ gap: 0 }}
         variants={containerVariants}
         initial="hidden"
@@ -93,14 +93,22 @@ const Collage = () => {
             className="relative overflow-hidden bg-card group"
             style={{
               aspectRatio: "4/5",
-              willChange: "transform",
+              // ✅ Remove willChange from static state — only promote during hover via CSS
             }}
           >
             <img
               src={src ?? logo}
               alt={src ? "" : "Logo"}
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              // ✅ Eager-load the first row (tiles 0–4); lazy-load everything below
+              loading={i < 5 ? "eager" : "lazy"}
+              // ✅ fetchpriority boosts the very first tile in the browser's preload queue
+              fetchPriority={i === 0 ? "high" : "auto"}
+              // ✅ Non-blocking decode so the main thread stays free
+              decoding="async"
+              // ✅ Size hints prevent layout shifts and help the browser budget bandwidth
+              width={400}
+              height={500}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:will-change-transform"
               style={{ display: "block" }}
             />
           </motion.div>
