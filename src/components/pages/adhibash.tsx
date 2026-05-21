@@ -68,7 +68,7 @@ function LozengeDivider({ className }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center gap-3 w-full ${className ?? ""}`}>
       <span
-        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
+        className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
           background:
             "linear-gradient(to right, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -86,7 +86,7 @@ function LozengeDivider({ className }: { className?: string }) {
         />
       </svg>
       <span
-        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
+        className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
           background:
             "linear-gradient(to left, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -103,8 +103,6 @@ export default function Adhibash({
   title       = "Adhibash",
   subtitle    = "The eve before the vows — quiet rituals, soft light, and a bride at home in her own story.",
   description = "Sacred preparations on the night before the wedding — every frame from the eve of the ceremony.",
-  date        = "",
-  location    = "",
 }: AdhibashProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [colCount, setColCount]       = useState(4);
@@ -277,7 +275,7 @@ export default function Adhibash({
 
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[640px]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-160"
         style={{
           background:
             "radial-gradient(ellipse 80% 65% at 50% -5%, color-mix(in oklab, var(--color-gold) 15%, transparent), transparent 60%)",
@@ -319,7 +317,7 @@ export default function Adhibash({
       />
 
       {/* ── HEADER ───────────────────────────────────────────────────────── */}
-      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+      <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
         <div
           ref={headingRef}
           className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
@@ -392,13 +390,13 @@ export default function Adhibash({
       {/* ── GRID ─────────────────────────────────────────────────────────── */}
       <div className="relative w-full">
         <div
-          className="grid items-stretch gap-[3px]"
+          className="grid items-stretch gap-0.75"
           style={{
             gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
           }}
         >
           {columns.map((colIndices, ci) => (
-            <div key={ci} className="flex h-full flex-col gap-[3px]">
+            <div key={ci} className="flex h-full flex-col gap-0.75">
               {colIndices.map((globalIndex, position) => (
                 <Tile
                   key={images[globalIndex].src + globalIndex}
@@ -414,7 +412,7 @@ export default function Adhibash({
       </div>
 
       {/* ── BOTTOM RULE + CTA ───────────────────────────────────────────── */}
-      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+      <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
 
         {/* Back CTA */}
