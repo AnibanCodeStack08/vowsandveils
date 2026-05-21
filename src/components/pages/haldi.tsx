@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 const img1  = "/images/haldi/img1.jpeg";
 const img2  = "/images/haldi/img2.jpeg";
 const img3  = "/images/haldi/img3.jpeg";
-const img4  = "/images/haldi/img4.jpeg";
+const img4  = "/images/haldi/img4.jpg";
 const img5  = "/images/haldi/img5.jpeg";
 const img6  = "/images/haldi/img6.jpeg";
 const img7  = "/images/haldi/img7.jpeg";
@@ -20,15 +20,15 @@ const img13 = "/images/haldi/img13.jpeg";
 const img14 = "/images/haldi/img14.jpeg";
 const img15 = "/images/haldi/img15.jpeg";
 const img16 = "/images/haldi/img16.jpeg";
-const img17 = "/images/haldi/img17.jpeg";
+const img17 = "/images/haldi/img17.jpg";
 const img18 = "/images/haldi/img18.jpeg";
 const img19 = "/images/haldi/img19.jpeg";
 const img20 = "/images/haldi/img20.jpeg";
 const img21 = "/images/haldi/img21.jpg";
 const img22 = "/images/haldi/img22.jpg";
-const img23 = "/images/haldi/img23.jpg";
+const img23 = "/images/haldi/img23.jpeg";
 const img24 = "/images/haldi/img24.jpg";
-const img25 = "/images/haldi/img25.jpg";
+const img25 = "/images/haldi/img25.jpeg";
 const img26 = "/images/haldi/img26.jpg";
 
 export interface HaldiImage {
@@ -366,7 +366,7 @@ export default function Haldi({
               className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
               style={{ color: "color-mix(in oklab, var(--color-foreground) 28%, transparent)" }}
             >
-              {String(images.length).padStart(2, "0")} frames
+              {String(images.length).padStart(2, "0")} Photos
             </span>
           </div>
         </div>

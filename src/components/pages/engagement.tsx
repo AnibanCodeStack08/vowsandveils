@@ -448,7 +448,7 @@ export default function Engagement({
                   "color-mix(in oklab, var(--color-foreground) 28%, transparent)",
               }}
             >
-              {String(images.length).padStart(2, "0")} frames
+              {String(images.length).padStart(2, "0")} photos
             </span>
           </div>
         </div>

@@ -33,6 +33,7 @@ const img27 = "/images/baby/img27.jpg";
 const img28 = "/images/baby/img28.jpg";
 const img29 = "/images/baby/img29.jpg";
 const img30 = "/images/baby/img30.jpg";
+const img31 = "/images/baby/img31.jpg";
 
 export interface BabyImage {
   src: string;
@@ -70,6 +71,7 @@ const defaultImages: BabyImage[] = [
   { src: img28, alt: "Cousins peering over the cradle" },
   { src: img29, alt: "The day slowed down for this" },
   { src: img30, alt: "And then there were three" },
+  { src: img31, alt: "One more love they hadn't planned for" },
 ];
 
 interface BabyProps {
@@ -438,7 +440,7 @@ export default function Baby({
                   "color-mix(in oklab, var(--color-foreground) 28%, transparent)",
               }}
             >
-              {String(images.length).padStart(2, "0")} frames
+              {String(images.length).padStart(2, "0")} photos
             </span>
           </div>
         </div>

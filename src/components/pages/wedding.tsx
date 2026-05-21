@@ -41,7 +41,7 @@ const img34 = "/images/wedding/img34.jpg";
 const img35 = "/images/wedding/img35.jpg";
 const img36 = "/images/wedding/img36.jpg";
 const img37 = "/images/wedding/img37.jpg";
-const img38 = "/images/wedding/img38.jpg";
+const img38 = "/images/wedding/img38.jpeg";
 const img39 = "/images/wedding/img39.jpg";
 const img40 = "/images/wedding/img40.jpg";
 const img41 = "/images/wedding/img41.jpg";
@@ -404,7 +404,7 @@ export default function Wedding({
               className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
               style={{ color: "color-mix(in oklab, var(--color-foreground) 28%, transparent)" }}
             >
-              {String(images.length).padStart(2, "0")} frames
+              {String(images.length).padStart(2, "0")} photos
             </span>
           </div>
         </div>
