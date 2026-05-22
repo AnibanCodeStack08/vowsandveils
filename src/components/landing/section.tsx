@@ -80,7 +80,7 @@ const CATEGORIES: Category[] = [
   },
   {
     name: "Engagement",
-    tagline: "Rings · glances · new beginnings", // ← updated
+    tagline: "Rings · glances · new beginnings",
     description:
       "Inked promises drying slow — a courtyard full of women, music and mischief.",
     image: g5,
@@ -399,7 +399,7 @@ const SpineCard: React.FC<{
         />
       </div>
 
-      {/* Active panel content — "Open this volume" CTA removed */}
+      {/* Active panel content */}
       <AnimatePresence>
         {isActive && (
           <motion.div
@@ -466,8 +466,8 @@ const SpineCard: React.FC<{
 // Main Section
 // =========================================================================
 const Section: React.FC = () => {
+  // Start with Haldi (index 0) open by default
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const navigate = useNavigate();
 
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -510,7 +510,7 @@ const Section: React.FC = () => {
     return () => ctx?.revert();
   }, []);
 
-  // GSAP flex-grow animation
+  // GSAP flex-grow animation — Haldi starts expanded
   useEffect(() => {
     loadGsap().then((mods) => {
       if (!mods) return;
@@ -525,17 +525,6 @@ const Section: React.FC = () => {
       });
     });
   }, [index]);
-
-  // Auto-advance — desktop only (disabled on mobile viewports)
-  useEffect(() => {
-    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-    if (!isDesktop || paused) return;
-    const id = window.setInterval(
-      () => setIndex((i) => (i + 1) % CATEGORIES.length),
-      5200
-    );
-    return () => window.clearInterval(id);
-  }, [paused]);
 
   // Keyboard nav
   const go = useCallback(
@@ -557,8 +546,6 @@ const Section: React.FC = () => {
       id="work"
       ref={sectionRef}
       className="relative bg-background py-16 md:py-32 px-4 md:px-10 overflow-hidden"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
     >
       <Suspense fallback={<div className="h-24" />}>
         <SectionHeading

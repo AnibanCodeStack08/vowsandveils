@@ -106,8 +106,8 @@ export default function Adhibash({
 }: AdhibashProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [colCount, setColCount]       = useState(4);
+  // Start with empty ratios — grid renders immediately with fallback ratio
   const [ratios, setRatios]           = useState<Record<string, number>>({});
-  const ratiosReady = Object.keys(ratios).length === images.length;
 
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
@@ -125,62 +125,40 @@ export default function Adhibash({
     return () => window.removeEventListener("resize", compute);
   }, []);
 
-  // ── Measure all images ──────────────────────────────────────────────────
+  // ── Measure images progressively — update ratio as each one loads ───────
   useEffect(() => {
     let cancelled = false;
-    const map: Record<string, number> = {};
-    let pending = images.length;
-
     images.forEach((img) => {
       const el = new window.Image();
-
-      const done = () => {
-        if (cancelled) return;
-        pending--;
-        if (pending === 0) setRatios({ ...map });
-      };
-
       el.onload = () => {
-        map[img.src] = el.naturalHeight / el.naturalWidth;
-        done();
+        if (cancelled) return;
+        const ratio = el.naturalHeight / el.naturalWidth;
+        setRatios((prev) => ({ ...prev, [img.src]: ratio }));
       };
-
       el.onerror = () => {
-        map[img.src] = 1.33;
-        done();
+        if (cancelled) return;
+        setRatios((prev) => ({ ...prev, [img.src]: 1.33 }));
       };
-
       el.src = img.src;
     });
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [images]);
 
-  // ── Greedy bin-pack ─────────────────────────────────────────────────────
+  // ── Greedy bin-pack — uses fallback ratio (1.33) until real ratio arrives ─
   const columns: number[][] = (() => {
-    if (!ratiosReady) {
-      return Array.from({ length: colCount }, () => [] as number[]);
-    }
-
     const cols: { items: number[]; h: number }[] = Array.from(
       { length: colCount },
       () => ({ items: [], h: 0 }),
     );
-
     images.forEach((img, idx) => {
-      const r = ratios[img.src];
-
+      const r = ratios[img.src] ?? 1.33; // fallback until measured
       let t = 0;
       for (let i = 1; i < cols.length; i++) {
         if (cols[i].h < cols[t].h) t = i;
       }
-
       cols[t].items.push(idx);
       cols[t].h += r;
     });
-
     return cols.map((c) => c.items);
   })();
 
@@ -415,7 +393,6 @@ export default function Adhibash({
       <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
 
-        {/* Back CTA */}
         <div className="mt-14 sm:mt-16 flex justify-center">
           <button
             onClick={() => navigate(-1)}
@@ -522,35 +499,42 @@ export default function Adhibash({
               className="relative max-h-[80vh] max-w-[88vw] sm:max-w-[76vw] flex flex-col items-center gap-5"
               onClick={(e) => e.stopPropagation()}
             >
-              <motion.img
-                key={images[activeIndex].src}
-                src={images[activeIndex].src}
-                alt={images[activeIndex].alt}
-                initial={{ opacity: 0, scale: 0.97, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.97, y: -10 }}
-                transition={{
-                  duration: 0.45,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                className="max-h-[74vh] max-w-full object-contain"
-                draggable={false}
-              />
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={images[activeIndex].src}
+                  src={images[activeIndex].src}
+                  alt={images[activeIndex].alt}
+                  initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: -10 }}
+                  transition={{
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="max-h-[74vh] max-w-full object-contain"
+                  style={{
+                    boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)",
+                  }}
+                  draggable={false}
+                />
+              </AnimatePresence>
 
-              <motion.p
-                key={images[activeIndex].alt}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ duration: 0.35, delay: 0.1 }}
-                className="italic text-xs sm:text-sm text-center"
-                style={{
-                  color:
-                    "color-mix(in oklab, var(--color-foreground) 36%, transparent)",
-                }}
-              >
-                {images[activeIndex].alt}
-              </motion.p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={images[activeIndex].alt}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.35, delay: 0.1 }}
+                  className="italic text-xs sm:text-sm text-center"
+                  style={{
+                    color:
+                      "color-mix(in oklab, var(--color-foreground) 36%, transparent)",
+                  }}
+                >
+                  {images[activeIndex].alt}
+                </motion.p>
+              </AnimatePresence>
             </div>
 
             <button
@@ -579,6 +563,9 @@ interface TileProps {
 }
 
 function Tile({ image, index, isLast = false, onClick }: TileProps) {
+  // First 8 tiles are above the fold — load eagerly with high priority
+  const isAboveFold = index < 8;
+
   const isLastCls = isLast ? " flex-1 flex flex-col" : "";
 
   const imgCls = isLast
@@ -603,8 +590,10 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
       <img
         src={image.src}
         alt={image.alt}
-        loading="lazy"
-        decoding="async"
+        loading={isAboveFold ? "eager" : "lazy"}
+        decoding={isAboveFold ? "sync" : "async"}
+        // @ts-ignore — fetchpriority is valid HTML but TS types lag behind
+        fetchpriority={index === 0 ? "high" : "auto"}
         className={imgCls}
       />
 

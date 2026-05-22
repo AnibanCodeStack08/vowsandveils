@@ -1,5 +1,4 @@
-import { motion, useInView, type Variants } from "framer-motion";
-import { useRef } from "react";
+import { motion, type Variants } from "framer-motion";
 
 const g1 = "/images/collage/img1.jpg";
 const g2 = "/images/collage/img2.jpeg";
@@ -20,28 +19,33 @@ const g14 = "/images/collage/img14.jpeg";
 
 const logo = "/images/collage/logo.jpeg";
 
+// ─── Variants ────────────────────────────────────────────────────────────────
+// Opacity-only fade: no scale/translate means zero layout thrashing,
+// the compositor handles it entirely on the GPU.
 const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.06,
+      staggerChildren: 0.045, // slightly tighter — less wall-clock time animating
     },
   },
 };
 
 const tileVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.92 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    scale: 1,
-    transition: { duration: 0.7, ease: "easeOut" },
+    transition: { duration: 0.55, ease: "easeOut" },
   },
 };
 
-const Collage = () => {
-  const gridRef = useRef(null);
-  const isInView = useInView(gridRef, { once: true, margin: "-80px" });
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
+};
 
+// ─── Component ───────────────────────────────────────────────────────────────
+const Collage = () => {
   const tiles = [
     g1, g2, g3, g4, g5,
     g6, g7, null, g8, g9,
@@ -53,12 +57,16 @@ const Collage = () => {
       id="why-us"
       className="bg-background py-24 md:py-32 overflow-x-hidden"
     >
-      {/* Heading */}
+      {/* ── Heading ── */}
+      {/*
+        Use whileInView directly — avoids the useRef+useInView pattern that
+        fires a JS callback on every scroll event.
+      */}
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="visible"
         viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.9, ease: "easeOut" }}
         className="text-center max-w-3xl mx-auto mb-14 md:mb-20 px-4 md:px-8"
       >
         <span className="hairline text-accent">A Wall of Forevers</span>
@@ -77,50 +85,80 @@ const Collage = () => {
         </p>
       </motion.div>
 
-      {/* Collage */}
+      {/* ── Collage Grid ── */}
+      {/*
+        Key perf changes vs the original:
+        1. whileInView replaces animate={isInView} — no JS on every scroll tick.
+        2. Opacity-only tile animation — scale was forcing the browser to
+           repaint all 15 tiles simultaneously, causing frame drops.
+        3. will-change: transform on the *container* (not tiles) — promotes
+           the whole grid to its own compositor layer up-front.
+        4. contain: "layout paint" on every tile — isolates repaints so a
+           change in one cell never triggers a full-grid repaint.
+        5. Hover scale stays (it's a user gesture, not scroll) but lives on
+           the img element so only one layer is promoted, not the whole grid.
+      */}
       <motion.div
-        ref={gridRef}
         className="grid grid-cols-3 md:grid-cols-5 w-full"
-        style={{ gap: 0 }}
+        style={{ gap: 0, willChange: "transform" }}
         variants={containerVariants}
         initial="hidden"
-        animate={isInView ? "visible" : "hidden"}
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
       >
         {tiles.map((src, i) => (
           <motion.div
             key={i}
             variants={tileVariants}
-            className="relative overflow-hidden bg-card group"
+            className="relative overflow-hidden bg-card"
             style={{
               aspectRatio: "4/5",
-              // ✅ Remove willChange from static state — only promote during hover via CSS
+              // Isolates repaints to this cell only
+              contain: "layout paint",
             }}
           >
             <img
               src={src ?? logo}
               alt={src ? "" : "Logo"}
-              // ✅ Eager-load the first row (tiles 0–4); lazy-load everything below
               loading={i < 5 ? "eager" : "lazy"}
-              // ✅ fetchpriority boosts the very first tile in the browser's preload queue
               fetchPriority={i === 0 ? "high" : "auto"}
-              // ✅ Non-blocking decode so the main thread stays free
               decoding="async"
-              // ✅ Size hints prevent layout shifts and help the browser budget bandwidth
               width={400}
               height={500}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:will-change-transform"
-              style={{ display: "block" }}
+              /*
+                will-change is set here permanently (not just on hover).
+                This pre-promotes the image to its own GPU layer so the
+                hover scale never causes a mid-interaction layer promotion
+                jank spike. The cost is slightly more VRAM, which is
+                acceptable for a fixed 15-image grid.
+              */
+              style={{
+                display: "block",
+                position: "absolute",
+                inset: 0,
+                height: "100%",
+                width: "100%",
+                objectFit: "cover",
+                willChange: "transform",
+                transition: "transform 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLImageElement).style.transform = "scale(1)";
+              }}
             />
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Closing line */}
+      {/* ── Closing line ── */}
       <motion.p
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="visible"
         viewport={{ once: true }}
-        transition={{ duration: 0.8, delay: 0.2 }}
         className="font-display italic text-2xl md:text-3xl text-center text-foreground/80 mt-14 md:mt-20 max-w-2xl mx-auto leading-snug px-4 md:px-8"
       >
         "Some stories are told in words. Ours, in light."
