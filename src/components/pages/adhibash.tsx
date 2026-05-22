@@ -106,11 +106,11 @@ export default function Adhibash({
 }: AdhibashProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [colCount, setColCount]       = useState(4);
-  // Start with empty ratios — grid renders immediately with fallback ratio
   const [ratios, setRatios]           = useState<Record<string, number>>({});
 
   const sectionRef = useRef<HTMLElement>(null);
-  const headingRef = useRef<HTMLDivElement>(null);
+  // heroRef scopes the GSAP context — same pattern as video-gallery
+  const heroRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
 
@@ -125,7 +125,7 @@ export default function Adhibash({
     return () => window.removeEventListener("resize", compute);
   }, []);
 
-  // ── Measure images progressively — update ratio as each one loads ───────
+  // ── Measure images progressively ────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     images.forEach((img) => {
@@ -144,14 +144,14 @@ export default function Adhibash({
     return () => { cancelled = true; };
   }, [images]);
 
-  // ── Greedy bin-pack — uses fallback ratio (1.33) until real ratio arrives ─
+  // ── Greedy bin-pack ──────────────────────────────────────────────────────
   const columns: number[][] = (() => {
     const cols: { items: number[]; h: number }[] = Array.from(
       { length: colCount },
       () => ({ items: [], h: 0 }),
     );
     images.forEach((img, idx) => {
-      const r = ratios[img.src] ?? 1.33; // fallback until measured
+      const r = ratios[img.src] ?? 1.33;
       let t = 0;
       for (let i = 1; i < cols.length; i++) {
         if (cols[i].h < cols[t].h) t = i;
@@ -162,55 +162,38 @@ export default function Adhibash({
     return cols.map((c) => c.items);
   })();
 
-  // ── GSAP heading entrance ───────────────────────────────────────────────
+  // ── GSAP hero entrance — identical pattern to video-gallery.tsx ──────────
+  //
+  //  .hero-word  →  each letter slides up from behind the overflow-hidden
+  //                 mask (yPercent 110 → 0, skewY 6 → 0, stagger 0.12)
+  //  .hero-sub   →  eyebrow / subtitle / description / meta fade + y slide
+  //
   useEffect(() => {
-    if (!headingRef.current) return;
-
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        defaults: { ease: "expo.out" },
-      });
-
-      tl.from(".adh-top-rule", {
-        scaleX: 0,
-        duration: 1.6,
-        transformOrigin: "center",
-      }, 0)
-        .from(".adh-eyebrow", {
-          opacity: 0,
-          y: -10,
-          duration: 1,
-        }, 0.15)
-        .from(".adh-title", {
-          opacity: 0,
-          y: 28,
-          duration: 1.4,
-        }, 0.28)
-        .from(".adh-subtitle", {
-          opacity: 0,
-          y: 14,
+      gsap.fromTo(
+        ".hero-word",
+        { yPercent: 110, opacity: 0, skewY: 6 },
+        {
+          yPercent: 0,
+          opacity: 1,
+          skewY: 0,
           duration: 1.1,
-        }, 0.5)
-        .from(".adh-bot-rule", {
-          scaleX: 0,
-          duration: 1.4,
-          transformOrigin: "center",
-        }, 0.55)
-        .from(".adh-desc", {
-          opacity: 0,
-          y: 10,
-          duration: 1,
-        }, 0.7)
-        .from(".adh-meta", {
-          opacity: 0,
-          duration: 0.9,
-        }, 0.85);
-    }, headingRef);
+          stagger: 0.12,
+          ease: "expo.out",
+          delay: 0.2,
+        }
+      );
+      gsap.fromTo(
+        ".hero-sub",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 1, delay: 0.7, ease: "power3.out" }
+      );
+    }, heroRef);
 
     return () => ctx.revert();
   }, []);
 
-  // ── Lightbox controls ───────────────────────────────────────────────────
+  // ── Lightbox controls ────────────────────────────────────────────────────
   const close = useCallback(() => setActiveIndex(null), []);
 
   const next = useCallback(
@@ -227,16 +210,13 @@ export default function Adhibash({
 
   useEffect(() => {
     if (activeIndex === null) return;
-
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft") prev();
+      if (e.key === "Escape")      close();
+      if (e.key === "ArrowRight")  next();
+      if (e.key === "ArrowLeft")   prev();
     };
-
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
-
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
@@ -249,8 +229,7 @@ export default function Adhibash({
       id="adhibash"
       className="relative w-full overflow-hidden bg-background py-24 sm:py-32 lg:py-40"
     >
-      {/* ── Backgrounds ──────────────────────────────────────────────────── */}
-
+      {/* ── Ambient background glows ─────────────────────────────────────── */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-160"
@@ -259,7 +238,6 @@ export default function Adhibash({
             "radial-gradient(ellipse 80% 65% at 50% -5%, color-mix(in oklab, var(--color-gold) 15%, transparent), transparent 60%)",
         }}
       />
-
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.045]"
@@ -283,7 +261,6 @@ export default function Adhibash({
           />
         ))}
       </div>
-
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.028] mix-blend-screen"
@@ -294,38 +271,61 @@ export default function Adhibash({
         }}
       />
 
-      {/* ── HEADER ───────────────────────────────────────────────────────── */}
-      <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
-        <div
-          ref={headingRef}
-          className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
-        >
-          <LozengeDivider className="adh-top-rule max-w-2xl" />
+      {/* ── HERO HEADER — same animation as video-gallery.tsx ────────────── */}
+      <div
+        ref={heroRef}
+        className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10"
+      >
+        <div className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-5 sm:gap-6">
 
+          {/* Top lozenge rule — hero-sub: fades in with the supporting copy */}
+          <LozengeDivider className="hero-sub max-w-2xl opacity-0" />
+
+          {/* Eyebrow — hero-sub */}
           <p
-            className="adh-eyebrow tracking-[0.42em] uppercase text-[10px] sm:text-xs mt-2"
+            className="hero-sub tracking-[0.42em] uppercase text-[10px] sm:text-xs mt-2 opacity-0"
             style={{
-              color:
-                "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+              color: "color-mix(in oklab, var(--color-gold) 72%, transparent)",
             }}
           >
             {eyebrow}
           </p>
 
-          <h2
-            className="adh-title font-display leading-[0.95]"
-            style={{
-              fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
-              fontWeight: 300,
-              letterSpacing: "-0.015em",
-              color: "var(--color-foreground)",
-            }}
-          >
-            {title}
-          </h2>
+          {/* ── Title — full word, letter-by-letter reveal ──────────────── */}
+          {/*
+           *  Single overflow-hidden wrapper masks all letters of the complete
+           *  word so they slide up together as one unit (yPercent 110 → 0).
+           *  Solid foreground line 1 + outline echo line 2 for depth, both
+           *  inside the same mask so the word never breaks across lines.
+           */}
+          <div className="overflow-hidden leading-none">
+            {/* Solid layer */}
+            <h2
+              className="font-display leading-[0.95] text-center"
+              style={{
+                fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
+                fontWeight: 300,
+                letterSpacing: "-0.015em",
+                color: "var(--color-foreground)",
+              }}
+            >
+              {title.split("").map((ch, i) => (
+                <span
+                  key={i}
+                  className="hero-word inline-block opacity-0"
+                  style={{ display: ch === " " ? "inline" : "inline-block" }}
+                >
+                  {ch === " " ? "\u00A0" : ch}
+                </span>
+              ))}
+            </h2>
+          </div>
 
+
+
+          {/* Subtitle — hero-sub */}
           <p
-            className="adh-subtitle font-display italic"
+            className="hero-sub font-display italic opacity-0"
             style={{
               fontSize: "clamp(1rem, 2.2vw, 1.6rem)",
               fontWeight: 300,
@@ -338,10 +338,12 @@ export default function Adhibash({
             {subtitle}
           </p>
 
-          <LozengeDivider className="adh-bot-rule max-w-xs opacity-60 mt-1" />
+          {/* Mid lozenge rule — hero-sub */}
+          <LozengeDivider className="hero-sub max-w-xs opacity-0 mt-1" />
 
+          {/* Description — hero-sub */}
           <p
-            className="adh-desc text-sm sm:text-base leading-relaxed"
+            className="hero-sub text-sm sm:text-base leading-relaxed opacity-0"
             style={{
               color:
                 "color-mix(in oklab, var(--color-foreground) 42%, transparent)",
@@ -351,7 +353,8 @@ export default function Adhibash({
             {description}
           </p>
 
-          <div className="adh-meta flex items-center justify-center gap-4 flex-wrap">
+          {/* Meta count — hero-sub */}
+          <div className="hero-sub flex items-center justify-center gap-4 flex-wrap opacity-0">
             <span
               className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
               style={{
@@ -466,18 +469,12 @@ export default function Adhibash({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{
-              duration: 0.3,
-              ease: [0.22, 1, 0.36, 1],
-            }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/96 backdrop-blur-lg"
             onClick={close}
           >
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                close();
-              }}
+              onClick={(e) => { e.stopPropagation(); close(); }}
               className="absolute top-5 right-5 z-10 p-2 text-foreground/45 transition-colors hover:text-foreground"
               aria-label="Close"
             >
@@ -485,10 +482,7 @@ export default function Adhibash({
             </button>
 
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                prev();
-              }}
+              onClick={(e) => { e.stopPropagation(); prev(); }}
               className="absolute left-3 sm:left-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
               aria-label="Previous"
             >
@@ -507,14 +501,9 @@ export default function Adhibash({
                   initial={{ opacity: 0, scale: 0.97, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.97, y: -10 }}
-                  transition={{
-                    duration: 0.45,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                   className="max-h-[74vh] max-w-full object-contain"
-                  style={{
-                    boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)",
-                  }}
+                  style={{ boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)" }}
                   draggable={false}
                 />
               </AnimatePresence>
@@ -538,10 +527,7 @@ export default function Adhibash({
             </div>
 
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                next();
-              }}
+              onClick={(e) => { e.stopPropagation(); next(); }}
               className="absolute right-3 sm:right-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
               aria-label="Next"
             >
@@ -554,7 +540,7 @@ export default function Adhibash({
   );
 }
 
-// ── Tile ──────────────────────────────────────────────────────────────────
+// ── Tile ──────────────────────────────────────────────────────────────────────
 interface TileProps {
   image: AdhibashImage;
   index: number;
@@ -563,11 +549,8 @@ interface TileProps {
 }
 
 function Tile({ image, index, isLast = false, onClick }: TileProps) {
-  // First 8 tiles are above the fold — load eagerly with high priority
   const isAboveFold = index < 8;
-
   const isLastCls = isLast ? " flex-1 flex flex-col" : "";
-
   const imgCls = isLast
     ? "block w-full flex-1 h-0 min-h-0 object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]"
     : "block h-auto w-full object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]";

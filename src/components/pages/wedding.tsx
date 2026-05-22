@@ -104,13 +104,14 @@ const defaultImages: WeddingImage[] = [
 ];
 
 interface WeddingProps {
-  images?:      WeddingImage[];
-  eyebrow?:     string;
-  title?:       string;
-  subtitle?:    string;
-  description?: string;
-  date?:        string;
-  location?:    string;
+  images?:       WeddingImage[];
+  eyebrow?:      string;
+  titleSolid?:   string;
+  titleOutline?: string;
+  subtitle?:     string;
+  description?:  string;
+  date?:         string;
+  location?:     string;
 }
 
 // ── Small centred lozenge divider ────────────────────────────────────────────
@@ -118,7 +119,7 @@ function LozengeDivider({ className }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center gap-3 w-full ${className ?? ""}`}>
       <span
-        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
+        className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
           background:
             "linear-gradient(to right, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -136,7 +137,7 @@ function LozengeDivider({ className }: { className?: string }) {
         />
       </svg>
       <span
-        className="flex-1 h-px max-w-[120px] sm:max-w-[180px]"
+        className="flex-1 h-px max-w-30 sm:max-w-45"
         style={{
           background:
             "linear-gradient(to left, transparent, color-mix(in oklab, var(--color-gold) 50%, transparent))",
@@ -148,21 +149,21 @@ function LozengeDivider({ className }: { className?: string }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Wedding({
-  images      = defaultImages,
-  eyebrow     = "The Wedding",
-  title       = "The Day",
-  subtitle    = "When everything stopped, and nothing else mattered.",
-  description = "Fire, flowers, and a lifetime promised — every frame from the day the vows were spoken.",
-  date        = "",
-  location    = "",
+  images       = defaultImages,
+  eyebrow      = "The Wedding",
+  titleSolid   = "Where Souls ",
+  titleOutline = "Aligned",
+  subtitle     = "When everything stopped, and nothing else mattered.",
+  description  = "Fire, flowers, and a lifetime promised — every frame from the day the vows were spoken.",
+  date         = "",
+  location     = "",
 }: WeddingProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [colCount, setColCount]       = useState(4);
-  // Start with empty ratios — grid renders immediately with fallback ratio
   const [ratios, setRatios]           = useState<Record<string, number>>({});
 
   const sectionRef = useRef<HTMLElement>(null);
-  const headingRef = useRef<HTMLDivElement>(null);
+  const heroRef    = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
 
@@ -177,7 +178,7 @@ export default function Wedding({
     return () => window.removeEventListener("resize", compute);
   }, []);
 
-  // ── Measure images progressively — update ratio as each one loads ───────
+  // ── Measure images progressively ────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     images.forEach((img) => {
@@ -196,14 +197,14 @@ export default function Wedding({
     return () => { cancelled = true; };
   }, [images]);
 
-  // ── Greedy bin-pack — uses fallback ratio (1.33) until real ratio arrives ─
+  // ── Greedy bin-pack ─────────────────────────────────────────────────────
   const columns: number[][] = (() => {
     const cols: { items: number[]; h: number }[] = Array.from(
       { length: colCount },
       () => ({ items: [], h: 0 }),
     );
     images.forEach((img, idx) => {
-      const r = ratios[img.src] ?? 1.33; // fallback until measured
+      const r = ratios[img.src] ?? 1.33;
       let t = 0;
       for (let i = 1; i < cols.length; i++) if (cols[i].h < cols[t].h) t = i;
       cols[t].items.push(idx);
@@ -212,19 +213,29 @@ export default function Wedding({
     return cols.map((c) => c.items);
   })();
 
-  // ── GSAP heading entrance ───────────────────────────────────────────────
+  // ── GSAP hero entrance — identical pattern to adhibash.tsx ──────────────
   useEffect(() => {
-    if (!headingRef.current) return;
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.from(".wd-top-rule",   { scaleX: 0,  duration: 1.6, transformOrigin: "center" }, 0)
-        .from(".wd-eyebrow",    { opacity: 0, y: -10, duration: 1 }, 0.15)
-        .from(".wd-title",      { opacity: 0, y: 28,  duration: 1.4 }, 0.28)
-        .from(".wd-subtitle",   { opacity: 0, y: 14,  duration: 1.1 }, 0.5)
-        .from(".wd-bot-rule",   { scaleX: 0,  duration: 1.4, transformOrigin: "center" }, 0.55)
-        .from(".wd-desc",       { opacity: 0, y: 10,  duration: 1 }, 0.7)
-        .from(".wd-meta",       { opacity: 0,          duration: 0.9 }, 0.85);
-    }, headingRef);
+      gsap.fromTo(
+        ".hero-word",
+        { yPercent: 110, opacity: 0, skewY: 6 },
+        {
+          yPercent: 0,
+          opacity: 1,
+          skewY: 0,
+          duration: 1.1,
+          stagger: 0.12,
+          ease: "expo.out",
+          delay: 0.2,
+        }
+      );
+      gsap.fromTo(
+        ".hero-sub",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 1, delay: 0.7, ease: "power3.out" }
+      );
+    }, heroRef);
+
     return () => ctx.revert();
   }, []);
 
@@ -261,18 +272,14 @@ export default function Wedding({
       className="relative w-full overflow-hidden bg-background py-24 sm:py-32 lg:py-40"
     >
       {/* ── Backgrounds ──────────────────────────────────────────────────── */}
-
-      {/* Wide centred glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[640px]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-160"
         style={{
           background:
             "radial-gradient(ellipse 80% 65% at 50% -5%, color-mix(in oklab, var(--color-gold) 15%, transparent), transparent 60%)",
         }}
       />
-
-      {/* Faint concentric ring motif */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.045]"
@@ -295,8 +302,6 @@ export default function Wedding({
           />
         ))}
       </div>
-
-      {/* Dot grid */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.028] mix-blend-screen"
@@ -307,39 +312,85 @@ export default function Wedding({
         }}
       />
 
-      {/* ── HEADER — centred, padded ──────────────────────────────────────── */}
-      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
-        <div
-          ref={headingRef}
-          className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-6 sm:gap-7"
-        >
-          {/* Top lozenge rule */}
-          <LozengeDivider className="wd-top-rule max-w-2xl" />
+      {/* ── HERO HEADER ──────────────────────────────────────────────────── */}
+      <div
+        ref={heroRef}
+        className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10"
+      >
+        <div className="mb-16 sm:mb-20 lg:mb-28 flex flex-col items-center text-center gap-5 sm:gap-6">
 
-          {/* Eyebrow */}
+          {/* Top lozenge rule — hero-sub */}
+          <LozengeDivider className="hero-sub max-w-2xl opacity-0" />
+
+          {/* Eyebrow — hero-sub */}
           <p
-            className="wd-eyebrow tracking-[0.42em] uppercase text-[10px] sm:text-xs mt-2"
-            style={{ color: "color-mix(in oklab, var(--color-gold) 72%, transparent)" }}
+            className="hero-sub tracking-[0.42em] uppercase text-[10px] sm:text-xs mt-2 opacity-0"
+            style={{
+              color: "color-mix(in oklab, var(--color-gold) 72%, transparent)",
+            }}
           >
             {eyebrow}
           </p>
 
-          {/* Main title */}
-          <h2
-            className="wd-title font-display leading-[0.95]"
-            style={{
-              fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
-              fontWeight: 300,
-              letterSpacing: "-0.015em",
-              color: "var(--color-foreground)",
-            }}
+          {/*
+           * Title — "Where Souls" + "Aligned" on ONE ROW, same solid
+           * foreground color throughout — identical to adhibash.tsx.
+           * No stroke, no transparent color on either word.
+           */}
+          <div
+            className="flex items-baseline justify-center gap-[0.18em] leading-none"
+            aria-label={`${titleSolid} ${titleOutline}`}
           >
-            {title}
-          </h2>
+            {/* "Where Souls" */}
+            <div className="overflow-hidden leading-none" aria-hidden>
+              <h2
+                className="font-display leading-[0.95]"
+                style={{
+                  fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
+                  fontWeight: 300,
+                  letterSpacing: "-0.015em",
+                  color: "var(--color-foreground)",
+                }}
+              >
+                {titleSolid.split("").map((ch, i) => (
+                  <span
+                    key={i}
+                    className="hero-word inline-block opacity-0"
+                    style={{ display: ch === " " ? "inline" : "inline-block" }}
+                  >
+                    {ch === " " ? "\u00A0" : ch}
+                  </span>
+                ))}
+              </h2>
+            </div>
 
-          {/* Subtitle */}
+            {/* "Aligned" — same solid color, no stroke */}
+            <div className="overflow-hidden leading-none" aria-hidden>
+              <h2
+                className="font-display leading-[0.95]"
+                style={{
+                  fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
+                  fontWeight: 300,
+                  letterSpacing: "-0.015em",
+                  color: "var(--color-foreground)",
+                }}
+              >
+                {titleOutline.split("").map((ch, i) => (
+                  <span
+                    key={i}
+                    className="hero-word inline-block opacity-0"
+                    style={{ display: ch === " " ? "inline" : "inline-block" }}
+                  >
+                    {ch === " " ? "\u00A0" : ch}
+                  </span>
+                ))}
+              </h2>
+            </div>
+          </div>
+
+          {/* Subtitle — hero-sub */}
           <p
-            className="wd-subtitle font-display italic"
+            className="hero-sub font-display italic opacity-0"
             style={{
               fontSize: "clamp(1rem, 2.2vw, 1.6rem)",
               fontWeight: 300,
@@ -351,12 +402,12 @@ export default function Wedding({
             {subtitle}
           </p>
 
-          {/* Bottom lozenge rule */}
-          <LozengeDivider className="wd-bot-rule max-w-xs opacity-60 mt-1" />
+          {/* Mid lozenge rule — hero-sub */}
+          <LozengeDivider className="hero-sub max-w-xs opacity-0 mt-1" />
 
-          {/* Description */}
+          {/* Description — hero-sub */}
           <p
-            className="wd-desc text-sm sm:text-base leading-relaxed"
+            className="hero-sub text-sm sm:text-base leading-relaxed opacity-0"
             style={{
               color: "color-mix(in oklab, var(--color-foreground) 42%, transparent)",
               maxWidth: "52ch",
@@ -365,8 +416,8 @@ export default function Wedding({
             {description}
           </p>
 
-          {/* Meta row */}
-          <div className="wd-meta flex items-center justify-center gap-4 flex-wrap">
+          {/* Meta row — hero-sub */}
+          <div className="hero-sub flex items-center justify-center gap-4 flex-wrap opacity-0">
             {date && (
               <span
                 className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
@@ -401,15 +452,18 @@ export default function Wedding({
             )}
             <span
               className="tracking-[0.32em] text-[10px] sm:text-xs uppercase"
-              style={{ color: "color-mix(in oklab, var(--color-foreground) 28%, transparent)" }}
+              style={{
+                color: "color-mix(in oklab, var(--color-foreground) 28%, transparent)",
+              }}
             >
               {String(images.length).padStart(2, "0")} photos
             </span>
           </div>
+
         </div>
       </div>
 
-      {/* ── MASONRY GRID — full bleed, no side padding ────────────────────── */}
+      {/* ── MASONRY GRID — full bleed ─────────────────────────────────────── */}
       <div className="relative w-full">
         <div
           className="grid items-stretch gap-[3px]"
@@ -432,22 +486,19 @@ export default function Wedding({
       </div>
 
       {/* ── BOTTOM RULE + CTA ─────────────────────────────────────────────── */}
-      <div className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+      <div className="relative mx-auto max-w-400 px-4 sm:px-6 lg:px-10">
         <LozengeDivider className="mt-16 sm:mt-20 lg:mt-28 opacity-35" />
 
-        {/* Back CTA */}
         <div className="mt-14 sm:mt-16 flex justify-center">
           <button
             onClick={() => navigate(-1)}
             className="group relative inline-flex items-center gap-3 overflow-hidden px-9 py-4 text-xs tracking-[0.38em] uppercase transition-all duration-500"
             style={{
-              border:
-                "1px solid color-mix(in oklab, var(--color-gold) 38%, transparent)",
+              border: "1px solid color-mix(in oklab, var(--color-gold) 38%, transparent)",
               color: "color-mix(in oklab, var(--color-gold) 72%, transparent)",
               background: "transparent",
             }}
           >
-            {/* Shimmer fill on hover */}
             <span
               aria-hidden
               className="pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0"
@@ -456,8 +507,6 @@ export default function Wedding({
                   "linear-gradient(105deg, color-mix(in oklab, var(--color-gold) 10%, transparent), color-mix(in oklab, var(--color-gold) 6%, transparent))",
               }}
             />
-
-            {/* Arrow */}
             <svg
               aria-hidden
               viewBox="0 0 20 20"
@@ -465,9 +514,7 @@ export default function Wedding({
               height="14"
               fill="none"
               className="relative transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-x-1"
-              style={{
-                stroke: "color-mix(in oklab, var(--color-gold) 72%, transparent)",
-              }}
+              style={{ stroke: "color-mix(in oklab, var(--color-gold) 72%, transparent)" }}
             >
               <path
                 d="M13 4L7 10L13 16"
@@ -476,10 +523,7 @@ export default function Wedding({
                 strokeLinejoin="round"
               />
             </svg>
-
             <span className="relative">Return to memories</span>
-
-            {/* Corner accents */}
             {[
               "top-0 left-0 border-t border-l",
               "top-0 right-0 border-t border-r",
@@ -491,8 +535,7 @@ export default function Wedding({
                 aria-hidden
                 className={`pointer-events-none absolute ${cls} h-2.5 w-2.5 opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
                 style={{
-                  borderColor:
-                    "color-mix(in oklab, var(--color-gold) 80%, transparent)",
+                  borderColor: "color-mix(in oklab, var(--color-gold) 80%, transparent)",
                 }}
               />
             ))}
@@ -514,7 +557,6 @@ export default function Wedding({
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/96 backdrop-blur-lg"
             onClick={close}
           >
-            {/* Close */}
             <button
               onClick={(e) => { e.stopPropagation(); close(); }}
               className="absolute top-5 right-5 z-10 p-2 text-foreground/45 transition-colors hover:text-foreground"
@@ -523,10 +565,11 @@ export default function Wedding({
               <X size={20} />
             </button>
 
-            {/* Counter */}
             <div
               className="absolute top-6 left-1/2 -translate-x-1/2 tracking-[0.35em] text-xs uppercase select-none"
-              style={{ color: "color-mix(in oklab, var(--color-foreground) 38%, transparent)" }}
+              style={{
+                color: "color-mix(in oklab, var(--color-foreground) 38%, transparent)",
+              }}
             >
               {String(activeIndex + 1).padStart(2, "0")}
               <span
@@ -538,7 +581,6 @@ export default function Wedding({
               {String(images.length).padStart(2, "0")}
             </div>
 
-            {/* Prev */}
             <button
               onClick={(e) => { e.stopPropagation(); prev(); }}
               className="absolute left-3 sm:left-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
@@ -547,7 +589,6 @@ export default function Wedding({
               <ChevronLeft size={26} />
             </button>
 
-            {/* Image + caption */}
             <div
               className="relative max-h-[80vh] max-w-[88vw] sm:max-w-[76vw] flex flex-col items-center gap-5"
               onClick={(e) => e.stopPropagation()}
@@ -558,34 +599,32 @@ export default function Wedding({
                   src={images[activeIndex].src}
                   alt={images[activeIndex].alt}
                   initial={{ opacity: 0, scale: 0.97, y: 10 }}
-                  animate={{ opacity: 1, scale: 1,    y: 0 }}
-                  exit={{    opacity: 0, scale: 0.97, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: -10 }}
                   transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                   className="max-h-[74vh] max-w-full object-contain"
-                  style={{
-                    boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)",
-                  }}
+                  style={{ boxShadow: "0 40px 100px -20px rgba(0,0,0,0.65)" }}
                   draggable={false}
                 />
               </AnimatePresence>
 
-              {/* Caption */}
               <AnimatePresence mode="wait">
                 <motion.p
                   key={images[activeIndex].alt}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{    opacity: 0, y: -5 }}
+                  exit={{ opacity: 0, y: -5 }}
                   transition={{ duration: 0.35, delay: 0.1 }}
                   className="italic text-xs sm:text-sm text-center"
-                  style={{ color: "color-mix(in oklab, var(--color-foreground) 36%, transparent)" }}
+                  style={{
+                    color: "color-mix(in oklab, var(--color-foreground) 36%, transparent)",
+                  }}
                 >
                   {images[activeIndex].alt}
                 </motion.p>
               </AnimatePresence>
             </div>
 
-            {/* Next */}
             <button
               onClick={(e) => { e.stopPropagation(); next(); }}
               className="absolute right-3 sm:right-6 z-10 p-3 text-foreground/38 transition-colors hover:text-foreground"
@@ -602,18 +641,16 @@ export default function Wedding({
 
 // ── Tile ──────────────────────────────────────────────────────────────────────
 interface TileProps {
-  image:    WeddingImage;
-  index:    number;
-  isLast?:  boolean;
-  onClick:  () => void;
+  image:   WeddingImage;
+  index:   number;
+  isLast?: boolean;
+  onClick: () => void;
 }
 
 function Tile({ image, index, isLast = false, onClick }: TileProps) {
-  // First 8 tiles are above the fold — load eagerly with high priority
   const isAboveFold = index < 8;
-
-  const isLastCls = isLast ? " flex-1 flex flex-col" : "";
-  const imgCls    = isLast
+  const isLastCls   = isLast ? " flex-1 flex flex-col" : "";
+  const imgCls      = isLast
     ? "block w-full flex-1 h-0 min-h-0 object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]"
     : "block h-auto w-full object-cover transition-all duration-[1300ms] ease-out will-change-transform group-hover:scale-[1.045] group-hover:brightness-[1.06]";
 
@@ -632,18 +669,15 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
       className={`group relative block w-full overflow-hidden bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-gold hover:z-10${isLastCls}`}
       aria-label={`Open photo: ${image.alt}`}
     >
-      {/* Photo */}
       <img
         src={image.src}
         alt={image.alt}
         loading={isAboveFold ? "eager" : "lazy"}
         decoding={isAboveFold ? "sync" : "async"}
-        // @ts-ignore — fetchpriority is valid HTML but TS types lag behind
+        // @ts-ignore
         fetchpriority={index === 0 ? "high" : "auto"}
         className={imgCls}
       />
-
-      {/* Inner glow on hover */}
       <div
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
         style={{
@@ -651,8 +685,6 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
             "inset 0 0 55px color-mix(in oklab, var(--color-gold) 25%, transparent)",
         }}
       />
-
-      {/* Caption slide-up */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-[480ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0"
         style={{
@@ -665,7 +697,9 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
       >
         <p
           className="text-xs italic leading-snug"
-          style={{ color: "color-mix(in oklab, var(--color-foreground) 65%, transparent)" }}
+          style={{
+            color: "color-mix(in oklab, var(--color-foreground) 65%, transparent)",
+          }}
         >
           {image.alt}
         </p>
