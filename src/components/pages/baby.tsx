@@ -130,8 +130,8 @@ export default function Baby({
 }: BabyProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [colCount, setColCount]       = useState(4);
+  // Start with empty ratios — grid renders immediately with fallback ratio
   const [ratios, setRatios]           = useState<Record<string, number>>({});
-  const ratiosReady = Object.keys(ratios).length === images.length;
 
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
@@ -149,42 +149,33 @@ export default function Baby({
     return () => window.removeEventListener("resize", compute);
   }, []);
 
-  // ── Measure all images ──────────────────────────────────────────────────
+  // ── Measure images progressively — update ratio as each one loads ───────
   useEffect(() => {
     let cancelled = false;
-    const map: Record<string, number> = {};
-    let pending = images.length;
-
     images.forEach((img) => {
       const el = new window.Image();
-
-      const done = () => {
+      el.onload = () => {
         if (cancelled) return;
-        pending--;
-        if (pending === 0) setRatios({ ...map });
+        const ratio = el.naturalHeight / el.naturalWidth;
+        setRatios((prev) => ({ ...prev, [img.src]: ratio }));
       };
-
-      el.onload  = () => { map[img.src] = el.naturalHeight / el.naturalWidth; done(); };
-      el.onerror = () => { map[img.src] = 1.33; done(); };
+      el.onerror = () => {
+        if (cancelled) return;
+        setRatios((prev) => ({ ...prev, [img.src]: 1.33 }));
+      };
       el.src = img.src;
     });
-
     return () => { cancelled = true; };
   }, [images]);
 
-  // ── Greedy bin-pack ─────────────────────────────────────────────────────
+  // ── Greedy bin-pack — uses fallback ratio (1.33) until real ratio arrives ─
   const columns: number[][] = (() => {
-    if (!ratiosReady) {
-      return Array.from({ length: colCount }, () => [] as number[]);
-    }
-
     const cols: { items: number[]; h: number }[] = Array.from(
       { length: colCount },
       () => ({ items: [], h: 0 }),
     );
-
     images.forEach((img, idx) => {
-      const r = ratios[img.src];
+      const r = ratios[img.src] ?? 1.33; // fallback until measured
       let t = 0;
       for (let i = 1; i < cols.length; i++) {
         if (cols[i].h < cols[t].h) t = i;
@@ -192,7 +183,6 @@ export default function Baby({
       cols[t].items.push(idx);
       cols[t].h += r;
     });
-
     return cols.map((c) => c.items);
   })();
 
@@ -429,12 +419,6 @@ export default function Baby({
             </div>
           ))}
         </div>
-
-        <div aria-hidden className="sr-only absolute w-0 h-0 overflow-hidden">
-          {images.map((img, i) => (
-            <img key={i} src={img.src} alt="" />
-          ))}
-        </div>
       </div>
 
       {/* ── BOTTOM RULE + CTA ─────────────────────────────────────────────── */}
@@ -611,6 +595,9 @@ interface TileProps {
 }
 
 function Tile({ image, index, isLast = false, onClick }: TileProps) {
+  // First 8 tiles are above the fold — load eagerly with high priority
+  const isAboveFold = index < 8;
+
   const isLastCls = isLast ? " flex-1 flex flex-col" : "";
 
   const imgCls = isLast
@@ -635,8 +622,10 @@ function Tile({ image, index, isLast = false, onClick }: TileProps) {
       <img
         src={image.src}
         alt={image.alt}
-        loading="lazy"
-        decoding="async"
+        loading={isAboveFold ? "eager" : "lazy"}
+        decoding={isAboveFold ? "sync" : "async"}
+        // @ts-ignore — fetchpriority is valid HTML but TS types lag behind
+        fetchpriority={index === 0 ? "high" : "auto"}
         className={imgCls}
       />
 
