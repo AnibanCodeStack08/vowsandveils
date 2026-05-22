@@ -11,32 +11,30 @@ import { ArrowUpRight, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
+// ── GSAP: load once, reuse ────────────────────────────────────────────────
 let gsapCache: { gsap: any; ScrollTrigger: any } | null = null;
-
 const loadGsap = async () => {
   if (gsapCache) return gsapCache;
-
   const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
     import("gsap"),
     import("gsap/ScrollTrigger"),
   ]);
   gsap.registerPlugin(ScrollTrigger);
-
   gsapCache = { gsap, ScrollTrigger };
   return gsapCache;
 };
 
 const SectionHeading = lazy(() => import("../pages/sectionheading"));
 
-// -------------------- Assets --------------------
-const g3 = "/images/prewedding/img1.jpeg";
-const g4 = "/images/adhibash/img6.jpeg";
-const g5 = "/images/engagement/img3.jpeg";
-const g6 = "/images/wedding/img18.jpg";
+// ── Assets ────────────────────────────────────────────────────────────────
+const g3    = "/images/prewedding/img1.jpeg";
+const g4    = "/images/adhibash/img6.jpeg";
+const g5    = "/images/engagement/img3.jpeg";
+const g6    = "/images/wedding/img18.jpg";
 const haldi1 = "/images/haldi/img14.jpeg";
-const baby = "/images/baby/img32.jpg";
+const baby  = "/images/baby/img32.jpg";
 
-// -------------------- Types & Data --------------------
+// ── Types & Data ──────────────────────────────────────────────────────────
 type Category = {
   name: string;
   tagline: string;
@@ -99,7 +97,7 @@ const CATEGORIES: Category[] = [
 const pad = (n: number) => String(n + 1).padStart(2, "0");
 
 // =========================================================================
-// Lazy image with IntersectionObserver
+// LazyImage — stable observer, will-change hint for GPU compositing
 // =========================================================================
 const LazyImage = memo(
   ({
@@ -122,6 +120,8 @@ const LazyImage = memo(
       if (eager) return;
       const el = imgRef.current;
       if (!el) return;
+      // Already cached by browser
+      if (el.complete && el.naturalWidth > 0) { setLoaded(true); return; }
       const obs = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
@@ -129,11 +129,12 @@ const LazyImage = memo(
             obs.disconnect();
           }
         },
-        { rootMargin: "200px" }
+        { rootMargin: "300px" }
       );
       obs.observe(el);
       return () => obs.disconnect();
-    }, [src, eager]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // run once — src/eager won't change per card
 
     return (
       <img
@@ -149,11 +150,14 @@ const LazyImage = memo(
           ...style,
           opacity: loaded ? 1 : 0,
           transition: "opacity 0.5s ease",
+          // promote to own layer to avoid layout during scroll
+          willChange: "opacity",
         }}
       />
     );
   }
 );
+LazyImage.displayName = "LazyImage";
 
 // =========================================================================
 // Mobile Accordion
@@ -161,7 +165,7 @@ const LazyImage = memo(
 const MobileAccordion: React.FC<{
   index: number;
   setIndex: (i: number) => void;
-}> = ({ index, setIndex }) => {
+}> = memo(({ index, setIndex }) => {
   const navigate = useNavigate();
 
   return (
@@ -174,7 +178,7 @@ const MobileAccordion: React.FC<{
             key={c.name}
             className="relative rounded-sm ring-1 ring-accent/20 bg-card overflow-hidden"
           >
-            {/* ---- Header ---- */}
+            {/* Header */}
             <button
               onClick={() => setIndex(isActive ? -1 : i)}
               aria-expanded={isActive}
@@ -186,7 +190,6 @@ const MobileAccordion: React.FC<{
                   isActive ? "bg-accent" : "bg-accent/25"
                 }`}
               />
-
               <div className="flex items-center gap-3">
                 <span className="hairline text-accent tabular-nums text-[10px] tracking-widest">
                   {pad(i)}
@@ -199,16 +202,12 @@ const MobileAccordion: React.FC<{
                   {c.name}
                 </span>
               </div>
-
-              <motion.span
-                animate={{ rotate: isActive ? 0 : 0 }}
-                className="text-accent flex-shrink-0"
-              >
+              <span className="text-accent flex-shrink-0">
                 {isActive ? <X size={16} /> : <Plus size={16} />}
-              </motion.span>
+              </span>
             </button>
 
-            {/* ---- Expandable body ---- */}
+            {/* Expandable body */}
             <AnimatePresence initial={false}>
               {isActive && (
                 <motion.div
@@ -216,7 +215,7 @@ const MobileAccordion: React.FC<{
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                   style={{ overflow: "hidden" }}
                 >
                   <div
@@ -227,7 +226,6 @@ const MobileAccordion: React.FC<{
                     onKeyDown={(e) => e.key === "Enter" && navigate(c.to)}
                     className="cursor-pointer select-none"
                   >
-                    {/* Image */}
                     <div
                       className="relative w-full"
                       style={{ height: "min(56vw, 320px)" }}
@@ -239,7 +237,6 @@ const MobileAccordion: React.FC<{
                         className="absolute inset-0 h-full w-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
-
                       <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-background/60 backdrop-blur-sm rounded-full px-3 py-1.5">
                         <span className="hairline text-foreground/80 text-[10px] tracking-widest uppercase">
                           View gallery
@@ -248,7 +245,6 @@ const MobileAccordion: React.FC<{
                       </div>
                     </div>
 
-                    {/* Text */}
                     <motion.div
                       initial={{ y: 12, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
@@ -258,19 +254,13 @@ const MobileAccordion: React.FC<{
                       <span className="hairline text-accent text-[10px] tracking-[0.18em] uppercase block mb-1">
                         Vol {pad(i)} · {c.tagline}
                       </span>
-
                       <motion.div
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
-                        transition={{
-                          duration: 0.5,
-                          delay: 0.25,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
+                        transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
                         style={{ transformOrigin: "left center" }}
                         className="h-px w-12 bg-accent my-2.5"
                       />
-
                       <p className="text-foreground/75 text-sm leading-relaxed">
                         {c.description}
                       </p>
@@ -324,55 +314,64 @@ const MobileAccordion: React.FC<{
       </div>
     </div>
   );
-};
+});
+MobileAccordion.displayName = "MobileAccordion";
 
 // =========================================================================
-// Desktop SpineCard
+// SpineCard — memo + CSS transitions instead of GSAP for flex-grow
 // =========================================================================
 const SpineCard: React.FC<{
   c: Category;
   i: number;
-  index: number;
-  spineRef: (el: HTMLButtonElement | null) => void;
-  onMouseEnter: () => void;
-  onFocus: () => void;
-  onClick: () => void;
-}> = ({ c, i, index, spineRef, onMouseEnter, onFocus, onClick }) => {
-  const isActive = i === index;
-
+  isActive: boolean;               // ← derived outside, avoids full re-render
+  onActivate: () => void;
+  onNavigate: () => void;
+}> = memo(({ c, i, isActive, onActivate, onNavigate }) => {
   return (
     <button
-      ref={spineRef}
       role="tab"
       aria-selected={isActive}
       aria-label={`Open ${c.name} gallery`}
-      onMouseEnter={onMouseEnter}
-      onFocus={onFocus}
-      onClick={onClick}
-      className="group relative overflow-hidden rounded-sm ring-1 ring-accent/25 bg-card text-left flex-1 min-h-0 cursor-pointer"
-      style={{ flexBasis: 0 }}
+      onMouseEnter={onActivate}
+      onFocus={onActivate}
+      onClick={onNavigate}
+      // CSS flex-grow transition — zero JS cost on every frame
+      className="group relative overflow-hidden rounded-sm ring-1 ring-accent/25 bg-card text-left min-h-0 cursor-pointer"
+      style={{
+        flexGrow: isActive ? 7 : 1,
+        flexBasis: 0,
+        transition: "flex-grow 0.75s cubic-bezier(0.22, 1, 0.36, 1)",
+        // GPU layer for the card itself
+        willChange: "flex-grow",
+      }}
     >
       {/* Background image */}
       <LazyImage
         src={c.image}
         alt=""
         eager={i === 0}
-        className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out ${
-          isActive
-            ? "opacity-100 scale-100 grayscale-0"
-            : "opacity-35 scale-105 grayscale"
-        }`}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          opacity: isActive ? 1 : 0.35,
+          transform: isActive ? "scale(1)" : "scale(1.05)",
+          filter: isActive ? "grayscale(0%)" : "grayscale(100%)",
+          transition: "opacity 0.7s ease-out, transform 0.7s ease-out, filter 0.7s ease-out",
+          willChange: "transform, opacity, filter",
+        }}
       />
 
-      {!isActive && (
-        <div className="absolute inset-0 transition-all duration-500 ease-out opacity-100 group-hover:opacity-0 bg-background/65" />
-      )}
+      {/* Inactive overlay */}
+      <div
+        className="absolute inset-0 bg-background/65 transition-opacity duration-500 ease-out group-hover:opacity-0"
+        style={{ opacity: isActive ? 0 : 1, pointerEvents: "none" }}
+      />
 
+      {/* Active gradient */}
       {isActive && (
-        <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent pointer-events-none" />
       )}
 
-      {/* Left edge gold rule */}
+      {/* Left gold rule */}
       <div
         aria-hidden
         className={`absolute left-0 top-0 bottom-0 w-px transition-colors duration-500 ${
@@ -382,9 +381,12 @@ const SpineCard: React.FC<{
 
       {/* Inactive spine label */}
       <div
-        className={`absolute inset-0 flex flex-col items-center justify-between py-6 transition-opacity duration-300 pointer-events-none ${
-          isActive ? "opacity-0" : "opacity-100 delay-200"
-        }`}
+        className="absolute inset-0 flex flex-col items-center justify-between py-6 pointer-events-none"
+        style={{
+          opacity: isActive ? 0 : 1,
+          transition: "opacity 0.3s ease",
+          transitionDelay: isActive ? "0ms" : "200ms",
+        }}
       >
         <span className="hairline text-accent tabular-nums">{pad(i)}</span>
         <span
@@ -460,21 +462,20 @@ const SpineCard: React.FC<{
       </AnimatePresence>
     </button>
   );
-};
+});
+SpineCard.displayName = "SpineCard";
 
 // =========================================================================
 // Main Section
 // =========================================================================
 const Section: React.FC = () => {
-  // Start with Haldi (index 0) open by default
   const [index, setIndex] = useState(0);
   const navigate = useNavigate();
 
   const sectionRef = useRef<HTMLDivElement>(null);
-  const shelfRef = useRef<HTMLDivElement>(null);
-  const spineRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const shelfRef   = useRef<HTMLDivElement>(null);
 
-  // Lazy-load GSAP scroll animations
+  // ── Scroll-triggered entrance animation (runs ONCE) ───────────────────
   useEffect(() => {
     let ctx: any;
     loadGsap().then((mods) => {
@@ -486,17 +487,20 @@ const Section: React.FC = () => {
             trigger: sectionRef.current,
             start: "top 75%",
             toggleActions: "play none none none",
+            once: true,           // ← fire once, then self-kill
           },
           y: 60,
           opacity: 0,
           duration: 1,
           ease: "expo.out",
         });
-        gsap.from(spineRefs.current.filter(Boolean), {
+        // Animate children of shelf instead of tracking individual refs
+        gsap.from(".spine-card", {
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 75%",
             toggleActions: "play none none none",
+            once: true,
           },
           y: 80,
           opacity: 0,
@@ -508,38 +512,35 @@ const Section: React.FC = () => {
       }, sectionRef);
     });
     return () => ctx?.revert();
-  }, []);
+  }, []); // ← empty deps: runs once
 
-  // GSAP flex-grow animation — Haldi starts expanded
-  useEffect(() => {
-    loadGsap().then((mods) => {
-      if (!mods) return;
-      const { gsap } = mods;
-      spineRefs.current.forEach((el, i) => {
-        if (!el) return;
-        gsap.to(el, {
-          flexGrow: i === index ? 7 : 1,
-          duration: 0.85,
-          ease: "expo.out",
-        });
-      });
-    });
-  }, [index]);
+  // ── NOTE: flex-grow is now handled entirely by CSS transition ──────────
+  // No GSAP needed per index change — eliminates JS per-frame work.
 
-  // Keyboard nav
+  // ── Keyboard nav ──────────────────────────────────────────────────────
   const go = useCallback(
     (dir: 1 | -1) =>
       setIndex((i) => (i + dir + CATEGORIES.length) % CATEGORIES.length),
     []
   );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === "ArrowDown") go(1);
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") go(-1);
+      if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   go(-1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [go]);
+
+  // ── Stable callbacks — one per card, never recreated ─────────────────
+  // Using index i captured at render time is fine; setIndex is stable.
+  const activators = useRef(
+    CATEGORIES.map((_, i) => () => setIndex(i))
+  );
+  const navigators = useRef(
+    CATEGORIES.map((c) => () => navigate(c.to))
+  );
 
   return (
     <section
@@ -581,11 +582,9 @@ const Section: React.FC = () => {
             key={c.name}
             c={c}
             i={i}
-            index={index}
-            spineRef={(el) => { spineRefs.current[i] = el; }}
-            onMouseEnter={() => setIndex(i)}
-            onFocus={() => setIndex(i)}
-            onClick={() => navigate(c.to)}
+            isActive={i === index}
+            onActivate={activators.current[i]}
+            onNavigate={navigators.current[i]}
           />
         ))}
       </div>
