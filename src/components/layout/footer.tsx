@@ -70,7 +70,7 @@ const SOCIAL_LINKS: SocialLink[] = [
   },
   {
     name: "YouTube",
-    href: "https://www.youtube.com/@SantanuDasPhotography23",
+    href: "https://www.youtube.com/@SantanuDasPhotography23/videos",
     Icon: YouTubeIcon,
     gradient: "linear-gradient(135deg, #ff0000 0%, #cc0000 100%)",
     hoverGlow: "0 0 32px rgba(255, 0, 0, 0.55)",

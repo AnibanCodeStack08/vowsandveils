@@ -20,21 +20,10 @@ function VideoCard({ video, index, isPlaying, onPlay }: VideoCardProps) {
       transition={{ duration: 0.7, delay: index * 0.12, ease: [0.22, 1, 0.36, 1] }}
       className="group relative overflow-hidden rounded-md border border-border bg-card transition-all duration-500 hover:border-gold"
     >
-      {/*
-        Click interceptor: fires before LiteYouTube's own handler so
-        playingId updates synchronously — any previously playing card
-        gets a new key and remounts (stops) before the new one plays.
-      */}
       <div
         className="relative aspect-video w-full overflow-hidden"
         onClick={() => onPlay(video.id)}
       >
-        {/*
-          Key trick: while this card is the active one its key stays
-          stable so the iframe persists. The moment another card is
-          clicked, isPlaying → false, the key changes, LiteYouTube
-          unmounts/remounts back to its thumbnail state (video stops).
-        */}
         <LiteYouTube
           key={isPlaying ? video.id : `${video.id}--idle`}
           id={video.id}
@@ -55,19 +44,19 @@ function VideoCard({ video, index, isPlaying, onPlay }: VideoCardProps) {
 export default function Video() {
   const navigate = useNavigate();
 
-  // Single source of truth: which video ID (if any) is currently playing.
   const [playingId, setPlayingId] = useState<string | null>(null);
 
-  // useCallback keeps the reference stable across re-renders so VideoCard
-  // props don't cause unnecessary motion re-animations.
   const handlePlay = useCallback((id: string) => {
     setPlayingId(id);
   }, []);
 
   const featured = VIDEOS.slice(0, 4);
 
+  // FIX: use navigate() directly — no window.scrollTo() before it.
+  // The /videos page scrolls itself to top on mount via its own useEffect.
+  // Calling window.scrollTo() here before navigate() interferes with the
+  // router's history push and can silently prevent navigation.
   const handleViewAll = () => {
-    window.scrollTo({ top: 0, behavior: "instant" });
     navigate("/videos");
   };
 

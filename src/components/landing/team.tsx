@@ -24,7 +24,6 @@ interface TeamProps {
   description?: string;
 }
 
-// ── Change 1: reordered — Rony now at #4, Asmita at #5 ──
 const DEFAULT_MEMBERS: TeamMember[] = [
   { name: "Santanu Das",     role: "Founder",              image: santanu,   quote: "Frames are memory's grammar." },
   { name: "Subhankar Dutta", role: "Lead Photographer",    image: subhankar, quote: "Light first. Always light." },
@@ -41,11 +40,8 @@ export default function Team({
   description = "Six storytellers crafting the quiet, unrepeatable moments of your day. Hover a name to meet them.",
 }: TeamProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  // ── Change 4: default is 0 (Santanu Das) — explicit and intentional ──
   const [active, setActive] = useState(0);
   const navigate = useNavigate();
-
-  // ── Change 2: auto-scroll useEffect removed entirely ──
 
   useLayoutEffect(() => {
     if (!sectionRef.current) return;
@@ -102,15 +98,13 @@ export default function Team({
             </p>
           </div>
 
-          {/* Meta — desktop: aside column | mobile: compact horizontal strip */}
-          {/* ── Change 1 (cont): "Reel" meta removed from both mobile and desktop strips ── */}
           <aside className="md:col-span-4 md:pt-3">
-            {/* Mobile: horizontal row of metas */}
+            {/* Mobile */}
             <dl className="flex items-center gap-0 divide-x divide-border/60 border border-border/40 md:hidden">
               <MetaCompact label="Cast" value={String(members.length).padStart(2, "0")} />
               <MetaCompact label="Now" value={`#${String(active + 1).padStart(2, "0")} ${member.name.split(" ")[0]}`} />
             </dl>
-            {/* Desktop: stacked */}
+            {/* Desktop */}
             <dl className="hidden md:grid md:grid-cols-1 gap-x-6 gap-y-4 text-sm">
               <Meta label="Cast" value={String(members.length).padStart(2, "0")} />
               <Meta label="Now" value={`#${String(active + 1).padStart(2, "0")} ${member.name.split(" ")[0]}`} />
@@ -124,7 +118,6 @@ export default function Team({
           {/* ── Portrait + caption + progress + CTA ── */}
           <div className="sp-stage md:col-span-8">
 
-            {/* On mobile: side-by-side portrait + cast list */}
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-5 md:block">
 
               {/* Portrait frame */}
@@ -138,8 +131,6 @@ export default function Team({
                   boxShadow: "0 40px 100px -40px color-mix(in oklab, var(--color-gold) 25%, transparent)",
                 }}
               >
-                <style>{`@media (min-width: 768px) { .portrait-frame { height: 31.25rem; aspect-ratio: unset; max-height: unset; } }`}</style>
-
                 <AnimatePresence mode="popLayout">
                   <motion.div
                     key={active}
@@ -229,7 +220,7 @@ export default function Team({
               </div>
             </div>
 
-            {/* Progress bars — static, no auto-advance animation */}
+            {/* Progress bars */}
             <div className="mt-4 flex items-center gap-1.5 sm:mt-5 sm:gap-2">
               {members.map((_, i) => (
                 <button
@@ -252,6 +243,12 @@ export default function Team({
 
             {/* CTA */}
             <div className="sp-cta mt-7 flex justify-center sm:mt-8 md:mt-10 md:max-w-lg md:mx-auto">
+              {/*
+               * FIX: navigate("/team-about") called directly from a plain <button>.
+               * The previous motion.button with whileHover/onHoverStart was
+               * intercepting pointer events and swallowing onClick.
+               * CtaButton now wraps the button in motion.div for scale animations.
+               */}
               <CtaButton onClick={() => navigate("/team-about")} />
             </div>
           </div>
@@ -299,63 +296,74 @@ function CtaButton({ onClick }: { onClick: () => void }) {
   const translateY = useTransform(springY, (v) => v * 0.18);
 
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={handleMouseLeave}
-      className="group relative overflow-hidden border px-6 py-3 transition-colors duration-300 focus:outline-none sm:px-8 sm:py-4"
-      aria-label="Meet the full atelier"
-      style={{
-        x: translateX,
-        y: translateY,
-        borderColor: "var(--color-gold)",
-        color: hovered ? "var(--color-background)" : "var(--color-foreground)",
-      }}
+    /*
+     * FIX: motion.div handles the magnetic translate + scale; plain <button>
+     * inside handles the click. Previously motion.button's whileHover /
+     * onHoverStart registered its own pointer listeners that raced with
+     * onClick and silently prevented navigation.
+     */
+    <motion.div
+      style={{ x: translateX, y: translateY }}
+      animate={{ scale: hovered ? 1.03 : 1 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 200, damping: 18 }}
     >
-      <motion.span
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "var(--color-gold)" }}
-        initial={false}
-        animate={{ y: hovered ? "0%" : "101%" }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      />
-      <motion.span
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
+      <button
+        type="button"
+        onClick={onClick}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={handleMouseLeave}
+        className="group relative overflow-hidden border px-6 py-3 transition-colors duration-300 focus:outline-none sm:px-8 sm:py-4"
+        aria-label="Meet the full atelier"
         style={{
-          background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
-          backgroundSize: "200% 100%",
+          borderColor: "var(--color-gold)",
+          color: hovered ? "var(--color-background)" : "var(--color-foreground)",
         }}
-        animate={hovered ? { backgroundPosition: ["200% 0", "-200% 0"] } : { backgroundPosition: "200% 0" }}
-        transition={{ duration: 0.7, ease: "easeInOut" }}
-      />
-      <span className="relative z-10 flex items-center gap-2 sm:gap-3">
-        <span className="hairline text-xs tracking-widest uppercase sm:text-sm">Meet the full Atelier</span>
+      >
         <motion.span
           aria-hidden
-          className="font-display text-lg leading-none sm:text-xl"
-          animate={{ x: hovered ? 4 : 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          →
-        </motion.span>
-      </span>
-      {(["left-0 top-0", "right-0 top-0 rotate-90", "left-0 bottom-0 -rotate-90", "right-0 bottom-0 rotate-180"] as const).map(
-        (cls, i) => (
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "var(--color-gold)" }}
+          initial={false}
+          animate={{ y: hovered ? "0%" : "101%" }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        />
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
+            backgroundSize: "200% 100%",
+          }}
+          animate={hovered ? { backgroundPosition: ["200% 0", "-200% 0"] } : { backgroundPosition: "200% 0" }}
+          transition={{ duration: 0.7, ease: "easeInOut" }}
+        />
+        <span className="relative z-10 flex items-center gap-2 sm:gap-3">
+          <span className="hairline text-xs tracking-widest uppercase sm:text-sm">Meet the full Atelier</span>
           <motion.span
-            key={i}
             aria-hidden
-            className={`pointer-events-none absolute h-2 w-2 sm:h-2.5 sm:w-2.5 ${cls}`}
-            style={{ borderTop: "1px solid var(--color-gold)", borderLeft: "1px solid var(--color-gold)" }}
-            animate={{ opacity: hovered ? 1 : 0.4, scale: hovered ? 1.3 : 1 }}
-            transition={{ duration: 0.3 }}
-          />
-        ),
-      )}
-    </motion.button>
+            className="font-display text-lg leading-none sm:text-xl"
+            animate={{ x: hovered ? 4 : 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            →
+          </motion.span>
+        </span>
+        {(["left-0 top-0", "right-0 top-0 rotate-90", "left-0 bottom-0 -rotate-90", "right-0 bottom-0 rotate-180"] as const).map(
+          (cls, i) => (
+            <motion.span
+              key={i}
+              aria-hidden
+              className={`pointer-events-none absolute h-2 w-2 sm:h-2.5 sm:w-2.5 ${cls}`}
+              style={{ borderTop: "1px solid var(--color-gold)", borderLeft: "1px solid var(--color-gold)" }}
+              animate={{ opacity: hovered ? 1 : 0.4, scale: hovered ? 1.3 : 1 }}
+              transition={{ duration: 0.3 }}
+            />
+          ),
+        )}
+      </button>
+    </motion.div>
   );
 }
 
@@ -428,7 +436,6 @@ function CastRow({
             </span>
           </div>
         </div>
-        {/* ── Change 3: hover arrow (→) removed from CastRow entirely ── */}
       </button>
       <motion.span
         aria-hidden
@@ -442,7 +449,6 @@ function CastRow({
   );
 }
 
-/** Compact horizontal meta cell for mobile strip */
 function MetaCompact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-0.5 px-2 py-2">

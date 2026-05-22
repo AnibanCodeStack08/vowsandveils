@@ -33,8 +33,8 @@ const MEMBERS: MemberDetail[] = [
     name: "Santanu Das",
     role: "Founder & Creative Director",
     image: santanu,
-    years: "14 yrs",
-    based: "Kolkata, IN",
+    years: "8 yrs",
+    based: "Jalpaiguri, IN",
     specialties: ["Creative Direction", "Editorial Portraits", "Brand Vision"],
     bio: "Santanu founded Vows&Veils on a single belief — that a wedding is a piece of literature, not a checklist. He directs every shoot like a chapter of your story, choosing the light, the pace and the silences with the same care a novelist gives to a sentence.",
     philosophy: "Frames are memory's grammar. Punctuate them gently.",
@@ -57,26 +57,14 @@ const MEMBERS: MemberDetail[] = [
     image: ujjwal,
     years: "9 yrs",
     based: "Mumbai, IN",
-    specialties: ["Cinematic Films", "Anamorphic Lens Work", "Documentary Edits"],
+    specialties: [
+      "Cinematic Films",
+      "Stories in Motion.",
+      "Long-Form Wedding Cinema",
+    ],
     bio: "Ujjwal believes a wedding film should breathe. He moves like a guest who never interrupts, capturing glances and gestures most people would miss — then weaves them into films that play like quiet, beautiful cinema.",
     philosophy: "A film is a held breath. Release it slowly.",
     signature: "Personally directs the highlight film score with our composer collaborators.",
-    testimonial: {
-      quote:
-        "Watching our film felt like reliving the day in slow motion. Our parents cried, then asked to watch it again.",
-      author: "Meher & Aditya, Goa",
-    },
-  },
-  {
-    name: "Asmita Moulik",
-    role: "Video Editor",
-    image: asmita,
-    years: "7 yrs",
-    based: "Kolkata, IN",
-    specialties: ["Story Edit", "Color Grading", "Sound Design"],
-    bio: "Asmita lives in the cut. She listens to hours of footage the way one listens to old letters — patient, attentive, looking for the line that holds everything together. The pacing of our films is hers.",
-    philosophy: "The cut is where feeling lives.",
-    signature: "Crafts a custom 60-second teaser within seven days of every wedding.",
   },
   {
     name: "Rony Roy",
@@ -88,6 +76,17 @@ const MEMBERS: MemberDetail[] = [
     bio: "Rony moves through a room without disturbing it. His coverage gives our films their texture — the laugh at table four, the cousin dancing with his shoes off, the quiet hand-squeeze before the vows.",
     philosophy: "Compose, then disappear.",
     signature: "Pre-walks every venue at golden hour to plan his angles.",
+  },
+  {
+    name: "Asmita Moulik",
+    role: "Video Editor",
+    image: asmita,
+    years: "7 yrs",
+    based: "Kolkata, IN",
+    specialties: ["Story Edit", "Color Grading", "Sound Design"],
+    bio: "Asmita lives in the cut. She listens to hours of footage the way one listens to old letters — patient, attentive, looking for the line that holds everything together. The pacing of our films is hers.",
+    philosophy: "The cut is where feeling lives.",
+    signature: "Crafts a custom 60-second teaser within seven days of every wedding.",
   },
   {
     name: "Sajal Biswas",
@@ -135,9 +134,10 @@ export default function TeamAboutPage() {
       <FilmGrain />
 
       <header className="relative mx-auto max-w-7xl px-6 pt-12 md:px-10 md:pt-16">
+        {/* FIX: navigate(-1) — goes back through browser history instead of hardcoding "/" */}
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="hairline inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground focus:outline-none"
         >
           <span aria-hidden>←</span> Back to Atelier
@@ -175,9 +175,10 @@ export default function TeamAboutPage() {
           <h2 className="font-display mt-4 text-balance text-4xl md:text-6xl">
             Let's design the film of your wedding.
           </h2>
+          {/* FIX: navigate(-1) — goes back through browser history instead of hardcoding "/" */}
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={() => navigate(-1)}
             className="group mt-10 inline-flex items-center gap-3 border border-border px-8 py-4 transition-colors hover:border-(--color-gold) focus:outline-none"
             style={{ color: "var(--color-foreground)" }}
           >

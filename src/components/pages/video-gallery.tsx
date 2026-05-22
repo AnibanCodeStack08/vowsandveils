@@ -247,6 +247,142 @@ function TabNav({ sections, activeKey, onSelect }: TabNavProps) {
   );
 }
 
+// ─── CinematicCTA ─────────────────────────────────────────────────────────────
+
+interface CinematicCTAProps {
+  onNavigate: () => void;
+}
+
+function CinematicCTA({ onNavigate }: CinematicCTAProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -60px 0px" });
+  const [hovered, setHovered] = useState(false);
+
+  const accentColor = GALLERY_SECTIONS[0].accent;
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 56 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+      className="relative flex flex-col items-center justify-center gap-8 py-24 md:py-32"
+    >
+      {/* Ambient glow beneath the CTA */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        animate={{ opacity: hovered ? 1 : 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <div
+          className="h-48 w-96 rounded-full blur-[80px]"
+          style={{ background: accentColor, opacity: 0.12 }}
+        />
+      </motion.div>
+
+      {/* Eyebrow label */}
+      <motion.p
+        initial={{ opacity: 0, letterSpacing: "0.2em" }}
+        animate={inView ? { opacity: 1, letterSpacing: "0.35em" } : {}}
+        transition={{ duration: 1.2, delay: 0.25, ease: "easeOut" }}
+        className="font-mono text-[10px] uppercase text-white/30"
+      >
+        End of Archive
+      </motion.p>
+
+      {/*
+       * FIX: Use a plain <button> (same as wedding.tsx) wrapped in a motion.div
+       * for scale animations. motion.button's whileTap/whileHover pointer-event
+       * handling was intercepting and swallowing the onClick in some cases.
+       */}
+      <motion.div
+        animate={{ scale: hovered ? 1.03 : 1 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 340, damping: 28 }}
+      >
+        <button
+          type="button"
+          onClick={onNavigate}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          className="group relative flex cursor-pointer items-center gap-5 overflow-hidden rounded-sm border border-white/10 bg-transparent px-10 py-5 md:px-14 md:py-6"
+          style={{ outline: "none" }}
+        >
+          {/* Sliding fill on hover */}
+          <motion.span
+            className="pointer-events-none absolute inset-0"
+            style={{ background: accentColor }}
+            initial={{ x: "-101%" }}
+            animate={{ x: hovered ? "0%" : "-101%" }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          />
+
+          {/* Glow border pulse */}
+          <motion.span
+            className="pointer-events-none absolute inset-0 rounded-sm"
+            animate={
+              hovered
+                ? { boxShadow: `0 0 32px -4px ${accentColor}80, inset 0 0 20px -8px ${accentColor}30` }
+                : { boxShadow: "none" }
+            }
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+
+          {/* Arrow icon */}
+          <motion.span
+            className="relative z-10 flex items-center"
+            animate={{ x: hovered ? 0 : -4, opacity: hovered ? 1 : 0.45 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              className="transition-colors duration-300"
+              style={{ color: hovered ? "#080808" : "rgba(255,255,255,0.5)" }}
+            >
+              <path
+                d="M8 1L1 8M1 8L8 15M1 8H15"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </motion.span>
+
+          {/* Label */}
+          <motion.span
+            className="relative z-10 font-mono text-sm tracking-[0.22em] uppercase transition-colors duration-300"
+            animate={{ color: hovered ? "#080808" : "rgba(255,255,255,0.75)" }}
+            transition={{ duration: 0.3 }}
+          >
+            Return to Stories
+          </motion.span>
+        </button>
+      </motion.div>
+
+      {/* Decorative ruled lines flanking the button */}
+      <motion.div
+        initial={{ opacity: 0, scaleX: 0 }}
+        animate={inView ? { opacity: 1, scaleX: 1 } : {}}
+        transition={{ duration: 1.4, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="flex w-full max-w-xs items-center gap-4 origin-center"
+      >
+        <div className="h-px flex-1 bg-white/8" />
+        <span
+          className="font-mono text-[9px] tracking-[0.4em] uppercase"
+          style={{ color: `${accentColor}60` }}
+        >
+          ✦
+        </span>
+        <div className="h-px flex-1 bg-white/8" />
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ─── VideoGallery (page root) ─────────────────────────────────────────────────
 
 export default function VideoGallery() {
@@ -293,7 +429,6 @@ export default function VideoGallery() {
     setActiveTab(key);
     const el = document.getElementById(`section-${key}`);
     if (el) {
-      // Offset for sticky nav (~56 px)
       const top = el.getBoundingClientRect().top + window.scrollY - 64;
       window.scrollTo({ top, behavior: "smooth" });
     }
@@ -319,10 +454,9 @@ export default function VideoGallery() {
     return () => observers.forEach((o) => o.disconnect());
   }, []);
 
-  const handleBackHome = () => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-    navigate("/");
-  };
+  const handleBackHome = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-[#080808] text-white">
@@ -340,13 +474,6 @@ export default function VideoGallery() {
           className="pointer-events-none absolute -bottom-16 right-1/4 h-[360px] w-[360px] rounded-full opacity-8 blur-[100px]"
           style={{ background: GALLERY_SECTIONS[1].accent }}
         />
-
-        <button
-          onClick={handleBackHome}
-          className="hero-sub absolute left-6 top-8 font-mono text-xs tracking-widest text-white/40 uppercase opacity-0 transition-colors hover:text-white md:left-12"
-        >
-          ← Back Home
-        </button>
 
         <div className="relative flex flex-col items-center text-center">
           <p className="hero-sub mb-6 font-mono text-xs tracking-[0.35em] text-white/50 uppercase opacity-0">
@@ -368,7 +495,8 @@ export default function VideoGallery() {
             </h1>
           </div>
           <div className="overflow-hidden">
-            <h1 className="font-display text-6xl leading-none tracking-tight md:text-9xl"
+            <h1
+              className="font-display text-6xl leading-none tracking-tight md:text-9xl"
               style={{ WebkitTextStroke: "1px rgba(255,255,255,0.3)", color: "transparent" }}
             >
               {"Collection".split("").map((ch, i) => (
@@ -424,6 +552,9 @@ export default function VideoGallery() {
             )}
           </div>
         ))}
+
+        {/* ── Cinematic CTA ── */}
+        <CinematicCTA onNavigate={handleBackHome} />
       </main>
 
       {/* ── Footer strip ── */}
