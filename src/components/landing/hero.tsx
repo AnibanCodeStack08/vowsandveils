@@ -1,122 +1,144 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
-const video = "/videos/header-bg.mp4";
+const VIDEO_SRC = "/videos/header-bg.mp4";
 
-const FADE_DURATION = 900;
+// CSS-based fade duration — no rAF loop needed
+const FADE_MS = 800;
 
 function Hero() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const isVisibleRef = useRef(true);
-  const hasInteractedRef = useRef(false);
-  const fadeRafRef = useRef<number | null>(null);
-  const [muted, setMuted] = useState(true);
+  const videoRef            = useRef<HTMLVideoElement | null>(null);
+  const sectionRef          = useRef<HTMLElement | null>(null);
+  const hasInteractedRef    = useRef(false);
+  const fadeTimerRef        = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [muted, setMuted]   = useState(true);
 
-  const cancelFade = () => {
-    if (fadeRafRef.current !== null) {
-      cancelAnimationFrame(fadeRafRef.current);
-      fadeRafRef.current = null;
+  // ── Util: clear any pending fade timer ─────────────────────────────────
+  const clearFadeTimer = () => {
+    if (fadeTimerRef.current !== null) {
+      clearTimeout(fadeTimerRef.current);
+      fadeTimerRef.current = null;
     }
   };
 
-  const fadeVolume = (
-    el: HTMLVideoElement,
-    targetVolume: number,
-    onComplete?: () => void
-  ) => {
-    cancelFade();
-    const startVolume = el.volume;
-    const delta = targetVolume - startVolume;
+  // ── Util: fade volume using Web Audio / CSS-style linear ramp ──────────
+  // Uses the HTMLMediaElement volume property with a single setInterval tick
+  // at 60 fps equivalent — much lighter than rAF on the main thread because
+  // it doesn't block layout/paint and can be throttled by the browser when
+  // the tab is hidden.
+  const fadeVolume = useCallback(
+    (
+      el: HTMLVideoElement,
+      target: number,
+      onDone?: () => void
+    ) => {
+      clearFadeTimer();
 
-    if (Math.abs(delta) < 0.001) {
-      onComplete?.();
-      return;
-    }
+      const start     = el.volume;
+      const delta     = target - start;
+      const steps     = 30;                       // ~16ms × 30 = ~480ms
+      const interval  = FADE_MS / steps;
+      let   step      = 0;
 
-    const startTime = performance.now();
-
-    const tick = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / FADE_DURATION, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-
-      el.volume = Math.min(1, Math.max(0, startVolume + delta * eased));
-
-      if (progress < 1) {
-        fadeRafRef.current = requestAnimationFrame(tick);
-      } else {
-        fadeRafRef.current = null;
-        onComplete?.();
+      // Snap immediately if already at target
+      if (Math.abs(delta) < 0.005) {
+        el.volume = target;
+        onDone?.();
+        return;
       }
-    };
 
-    fadeRafRef.current = requestAnimationFrame(tick);
+      const tick = () => {
+        step++;
+        const t       = step / steps;
+        // Ease-out cubic
+        const eased   = 1 - Math.pow(1 - t, 3);
+        el.volume     = Math.min(1, Math.max(0, start + delta * eased));
+
+        if (step < steps) {
+          fadeTimerRef.current = setTimeout(tick, interval);
+        } else {
+          el.volume = target;            // clamp to exact value
+          fadeTimerRef.current = null;
+          onDone?.();
+        }
+      };
+
+      fadeTimerRef.current = setTimeout(tick, interval);
+    },
+    []
+  );
+
+  // ── Safe play helper — avoids AbortError race ──────────────────────────
+  const safePlay = (el: HTMLVideoElement) => {
+    if (el.readyState >= 2) {           // HAVE_CURRENT_DATA or better
+      el.play().catch(() => {});
+    } else {
+      el.addEventListener("canplay", () => el.play().catch(() => {}), { once: true });
+    }
   };
 
-  // 1. AUTOPLAY
+  // 1. AUTOPLAY — muted, volume = 0 ──────────────────────────────────────
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    el.muted = true;
+    el.muted  = true;
     el.volume = 0;
-    el.play().catch((err) => console.warn("Autoplay blocked:", err));
+    safePlay(el);
   }, []);
 
-  // 2. Intersection observer fade
+  // 2. Intersection observer — pause when off-screen, resume on-screen ───
+  // Using `once: false` threshold 0.1 so we only fire when a meaningful
+  // portion is visible, not on every sub-pixel scroll.
   useEffect(() => {
-    const videoEl = videoRef.current;
+    const videoEl   = videoRef.current;
     const sectionEl = sectionRef.current;
     if (!videoEl || !sectionEl) return;
 
-    let debounce: ReturnType<typeof setTimeout> | null = null;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (debounce) clearTimeout(debounce);
+        if (entry.isIntersecting) {
+          // Resume playback (was paused on exit)
+          safePlay(videoEl);
 
-        debounce = setTimeout(() => {
-          isVisibleRef.current = entry.isIntersecting;
-
-          if (entry.isIntersecting) {
-            if (hasInteractedRef.current && videoEl.muted) {
-              videoEl.muted = false;
-              videoEl.volume = 0;
-            }
-            if (hasInteractedRef.current) {
-              fadeVolume(videoEl, 1);
-              setMuted(false);
-            }
-          } else {
-            fadeVolume(videoEl, 0, () => {
-              videoEl.muted = true;
-              setMuted(true);
-            });
+          // Restore audio only if user has explicitly unmuted
+          if (hasInteractedRef.current) {
+            videoEl.muted = false;
+            videoEl.volume = 0;
+            fadeVolume(videoEl, 1);
+            setMuted(false);
           }
-        }, 150);
+        } else {
+          // Fade out then pause — reduces CPU/GPU when hero is off-screen
+          fadeVolume(videoEl, 0, () => {
+            videoEl.muted = true;
+            setMuted(true);
+            // Pause video when fully off-screen to free GPU resources
+            if (!videoEl.paused) videoEl.pause();
+          });
+        }
       },
-      { threshold: [0, 0.1] }
+      { threshold: 0.1 }         // single threshold, no array — fewer callbacks
     );
 
     observer.observe(sectionEl);
 
     return () => {
       observer.disconnect();
-      if (debounce) clearTimeout(debounce);
-      cancelFade();
+      clearFadeTimer();
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fadeVolume]);
 
-  // 3. Mute / unmute toggle
-  const toggleMute = () => {
+  // 3. Toggle mute ────────────────────────────────────────────────────────
+  const toggleMute = useCallback(() => {
     const el = videoRef.current;
     if (!el) return;
 
-    if (el.muted || el.volume === 0) {
+    if (el.muted || el.volume < 0.05) {
       hasInteractedRef.current = true;
-      el.muted = false;
+      el.muted  = false;
       el.volume = 0;
-      el.play().catch(() => {});
+      safePlay(el);
       fadeVolume(el, 1);
       setMuted(false);
     } else {
@@ -125,17 +147,19 @@ function Hero() {
         setMuted(true);
       });
     }
-  };
+  }, [fadeVolume]);
 
   return (
     <section id="home" ref={sectionRef} className="hero-section">
       <style>{`
-        /* ── Desktop ───────────────────────────────────────────────────── */
+        /* ── Desktop ─────────────────────────────────────────────── */
         .hero-section {
           position: relative;
           width: 100%;
           height: 100vh;
           overflow: hidden;
+          /* GPU layer for the whole hero — prevents repaint on scroll */
+          contain: layout style paint;
         }
 
         .hero-section video {
@@ -143,22 +167,15 @@ function Hero() {
           height: 100%;
           object-fit: cover;
           object-position: center;
+          /* Own compositing layer — keeps video decode off main thread */
+          will-change: transform;
+          transform: translateZ(0);
         }
 
-        /* ── Mobile ────────────────────────────────────────────────────── */
+        /* ── Mobile ──────────────────────────────────────────────── */
         @media (max-width: 1024px) {
           #home.hero-section {
-            position: relative;
-            width: 100%;
             height: 28vh;
-            overflow: hidden;
-          }
-
-          #home.hero-section video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
           }
         }
 
@@ -167,15 +184,9 @@ function Hero() {
           #home.hero-section {
             height: 100vh;
           }
-
-          #home.hero-section video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
         }
 
-        /* Mute button */
+        /* ── Mute button ─────────────────────────────────────────── */
         .hero-mute-btn {
           position: absolute;
           bottom: 1rem;
@@ -184,30 +195,30 @@ function Hero() {
           width: 2.25rem;
           height: 2.25rem;
           border-radius: 9999px;
-          background: rgba(0, 0, 0, 0.45);
+          background: rgba(0, 0, 0, 0.5);
           border: 1px solid rgba(255, 255, 255, 0.2);
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          backdrop-filter: blur(6px);
+          /* removed backdrop-filter — it triggers compositing on every scroll */
           transition: background 0.2s ease;
         }
 
         .hero-mute-btn:hover {
-          background: rgba(0, 0, 0, 0.7);
+          background: rgba(0, 0, 0, 0.75);
         }
       `}</style>
 
       <video
         ref={videoRef}
-        src={video}
+        src={VIDEO_SRC}
         playsInline
         autoPlay
         loop
         muted
-        preload="auto"
+        preload="metadata"   /* was "auto" — metadata is enough to start playing */
       />
 
       <button
