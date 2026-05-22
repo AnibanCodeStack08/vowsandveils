@@ -333,12 +333,15 @@ export default function Wedding({
           </p>
 
           {/*
-           * Title — "Where Souls" + "Aligned" on ONE ROW, same solid
-           * foreground color throughout — identical to adhibash.tsx.
-           * No stroke, no transparent color on either word.
+           * TITLE — Mobile: each word block stacks on its own line (flex-col).
+           *         sm+:    side-by-side on one row (sm:flex-row) — desktop unchanged.
+           *
+           * Font size: clamp(3rem, 11vw, 9.5rem)
+           *   • Mobile  375px → 11vw ≈ 41px  < 3rem (48px) → uses 48px  ✓ fits per line
+           *   • Desktop 1280px → 11vw ≈ 141px < 9.5rem (152px) → uses 141px ✓ same as before
            */}
           <div
-            className="flex items-baseline justify-center gap-[0.18em] leading-none"
+            className="flex flex-col sm:flex-row items-center sm:items-baseline justify-center sm:gap-[0.18em] leading-none"
             aria-label={`${titleSolid} ${titleOutline}`}
           >
             {/* "Where Souls" */}
@@ -346,7 +349,7 @@ export default function Wedding({
               <h2
                 className="font-display leading-[0.95]"
                 style={{
-                  fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
+                  fontSize: "clamp(3rem, 11vw, 9.5rem)",
                   fontWeight: 300,
                   letterSpacing: "-0.015em",
                   color: "var(--color-foreground)",
@@ -369,7 +372,7 @@ export default function Wedding({
               <h2
                 className="font-display leading-[0.95]"
                 style={{
-                  fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
+                  fontSize: "clamp(3rem, 11vw, 9.5rem)",
                   fontWeight: 300,
                   letterSpacing: "-0.015em",
                   color: "var(--color-foreground)",

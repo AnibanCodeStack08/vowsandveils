@@ -173,7 +173,7 @@ export default function Haldi({
     return cols.map((c) => c.items);
   })();
 
-  // ── GSAP hero entrance — identical pattern to adhibash.tsx ──────────────
+  // ── GSAP hero entrance ──────────────────────────────────────────────────
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -225,6 +225,9 @@ export default function Haldi({
     };
   }, [activeIndex, close, next, prev]);
 
+  // ── Split title into words for responsive stacking ──────────────────────
+  const titleWords = title.split(" ");
+
   return (
     <section
       ref={sectionRef}
@@ -272,7 +275,7 @@ export default function Haldi({
         }}
       />
 
-      {/* ── HERO HEADER — same animation as adhibash.tsx ─────────────────── */}
+      {/* ── HERO HEADER ──────────────────────────────────────────────────── */}
       <div
         ref={heroRef}
         className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10"
@@ -293,30 +296,40 @@ export default function Haldi({
           </p>
 
           {/*
-           * Title — one overflow-hidden wrapper per word, letters as
-           * .hero-word spans so GSAP staggers left-to-right in DOM order.
-           * Identical markup pattern to adhibash.tsx.
+           * Title — each word in its own overflow-hidden wrapper.
+           * Mobile:  flex-col → words stack one per line, centred.
+           * sm+:     flex-row → all words inline on one row (desktop unchanged).
+           *
+           * Font: clamp(3rem, 11vw, 9.5rem)
+           *   • Mobile  375px → 11vw ≈ 41px  > 3rem (48px) → uses 41px  ✓
+           *   • Desktop 1280px → 11vw ≈ 141px → same as original clamp
            */}
-          <div className="overflow-hidden leading-none">
-            <h2
-              className="font-display leading-[0.95] text-center"
-              style={{
-                fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
-                fontWeight: 300,
-                letterSpacing: "-0.015em",
-                color: "var(--color-foreground)",
-              }}
-            >
-              {title.split("").map((ch, i) => (
-                <span
-                  key={i}
-                  className="hero-word inline-block opacity-0"
-                  style={{ display: ch === " " ? "inline" : "inline-block" }}
+          <div
+            className="flex flex-col sm:flex-row items-center sm:items-baseline justify-center gap-2 sm:gap-8 lg:gap-12 leading-none"
+            aria-label={title}
+          >
+            {titleWords.map((word, wordIdx) => (
+              <div key={wordIdx} className="overflow-hidden leading-none" aria-hidden>
+                <h2
+                  className="font-display leading-[0.95] text-center"
+                  style={{
+                    fontSize: "clamp(3rem, 11vw, 9.5rem)",
+                    fontWeight: 300,
+                    letterSpacing: "-0.015em",
+                    color: "var(--color-foreground)",
+                  }}
                 >
-                  {ch === " " ? "\u00A0" : ch}
-                </span>
-              ))}
-            </h2>
+                  {word.split("").map((ch, i) => (
+                    <span
+                      key={i}
+                      className="hero-word inline-block opacity-0"
+                    >
+                      {ch}
+                    </span>
+                  ))}
+                </h2>
+              </div>
+            ))}
           </div>
 
           {/* Subtitle — hero-sub */}

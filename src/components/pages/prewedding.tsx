@@ -187,13 +187,7 @@ export default function PreWedding({
     return cols.map((c) => c.items);
   })();
 
-  // ── GSAP hero entrance — same pattern as adhibash.tsx ───────────────────
-  //
-  //  .hero-word  →  each letter slides up from behind overflow-hidden mask
-  //                 (yPercent 110 → 0, skewY 6 → 0, stagger 0.12)
-  //  .hero-sub   →  eyebrow / subtitle / dividers / description / meta
-  //                 fade + y slide (opacity 0→1, y 16→0, delay 0.7)
-  //
+  // ── GSAP hero entrance ──────────────────────────────────────────────────
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -245,6 +239,9 @@ export default function PreWedding({
     };
   }, [activeIndex, close, next, prev]);
 
+  // ── Split title into words for responsive stacking ──────────────────────
+  const titleWords = title.split(" ");
+
   return (
     <section
       ref={sectionRef}
@@ -292,7 +289,7 @@ export default function PreWedding({
         }}
       />
 
-      {/* ── HERO HEADER — same animation as adhibash.tsx ─────────────────── */}
+      {/* ── HERO HEADER ──────────────────────────────────────────────────── */}
       <div
         ref={heroRef}
         className="relative mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10"
@@ -312,27 +309,41 @@ export default function PreWedding({
             {eyebrow}
           </p>
 
-          {/* ── Title — letter-by-letter reveal behind overflow-hidden mask ── */}
-          <div className="overflow-hidden leading-none">
-            <h2
-              className="font-display leading-[0.95] text-center"
-              style={{
-                fontSize: "clamp(3.8rem, 11vw, 9.5rem)",
-                fontWeight: 300,
-                letterSpacing: "-0.015em",
-                color: "var(--color-foreground)",
-              }}
-            >
-              {title.split("").map((ch, i) => (
-                <span
-                  key={i}
-                  className="hero-word inline-block opacity-0"
-                  style={{ display: ch === " " ? "inline" : "inline-block" }}
+          {/*
+           * Title — each word in its own overflow-hidden wrapper.
+           * Mobile:  flex-col → words stack one per line, centred.
+           * sm+:     flex-row → all words inline on one row (desktop unchanged).
+           *
+           * Font: clamp(3rem, 11vw, 9.5rem)
+           *   • Mobile  375px → 11vw ≈ 41px  > 3rem (48px) → uses 41px  ✓
+           *   • Desktop 1280px → 11vw ≈ 141px → same as original clamp
+           */}
+          <div
+            className="flex flex-col sm:flex-row items-center sm:items-baseline justify-center gap-2 sm:gap-8 lg:gap-12 leading-none"
+            aria-label={title}
+          >
+            {titleWords.map((word, wordIdx) => (
+              <div key={wordIdx} className="overflow-hidden leading-none" aria-hidden>
+                <h2
+                  className="font-display leading-[0.95] text-center"
+                  style={{
+                    fontSize: "clamp(3rem, 11vw, 9.5rem)",
+                    fontWeight: 300,
+                    letterSpacing: "-0.015em",
+                    color: "var(--color-foreground)",
+                  }}
                 >
-                  {ch === " " ? "\u00A0" : ch}
-                </span>
-              ))}
-            </h2>
+                  {word.split("").map((ch, i) => (
+                    <span
+                      key={i}
+                      className="hero-word inline-block opacity-0"
+                    >
+                      {ch}
+                    </span>
+                  ))}
+                </h2>
+              </div>
+            ))}
           </div>
 
           {/* Subtitle — hero-sub */}
@@ -350,7 +361,7 @@ export default function PreWedding({
           </p>
 
           {/* Mid lozenge rule — hero-sub */}
-          <LozengeDivider className="hero-sub max-w-xs opacity-60 mt-1 opacity-0" />
+          <LozengeDivider className="hero-sub max-w-xs opacity-0 mt-1" />
 
           {/* Description — hero-sub */}
           <p
