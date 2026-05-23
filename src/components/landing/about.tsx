@@ -148,7 +148,7 @@ const About = () => {
           </div>
 
           <p className="font-display italic text-3xl mt-10 text-foreground/80">
-            ~ Santanu Das
+            ~ Vows & Veils ~
           </p>
         </div>
       </div>
