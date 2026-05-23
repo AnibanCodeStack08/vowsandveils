@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-const santanu = "/images/profile/profile.jpg";
-const subhankar = "/images/team/subhankar.jpg";
-const ujjwal = "/images/team/ujjwal.jpg";
-const asmita = "/images/team/asmita.jpg";
-const rony = "/images/team/rony.jpg";
-const sajal = "/images/team/sajal.jpg";
+const santanu = "/images/team/santanu2.JPG";
+const subhankar = "/images/team/subhankar2.jpg";
+const ujjwal = "/images/team/ujjwal2.jpg";
+const asmita = "/images/team/asmita2.jpg";
+const rony = "/images/team/rony2.jpg";
+const sajal = "/images/team/sajal2.jpg";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);

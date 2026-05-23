@@ -3,12 +3,12 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 
-const santanu = "/images/profile/profile.jpg";
-const subhankar = "/images/team/subhankar.jpg";
-const ujjwal = "/images/team/ujjwal.jpg";
-const asmita = "/images/team/asmita.jpg";
-const rony = "/images/team/rony.jpg";
-const sajal = "/images/team/sajal.jpg";
+const santanu = "/images/team/santanu1.JPG";
+const subhankar = "/images/team/subhankar1.jpg";
+const ujjwal = "/images/team/ujjwal1.jpg";
+const asmita = "/images/team/asmita1.jpg";
+const rony = "/images/team/rony1.jpg";
+const sajal = "/images/team/sajal1.jpg";
 
 export interface TeamMember {
   name: string;
@@ -118,18 +118,89 @@ export default function Team({
           {/* ── Portrait + caption + progress + CTA ── */}
           <div className="sp-stage md:col-span-8">
 
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-5 md:block">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-5 md:block">
 
-              {/* Portrait frame */}
+              {/*
+               * Portrait frame
+               *
+               * Aspect ratio behaviour by breakpoint:
+               *   mobile (< sm)  → aspect-square  (1:1) — no maxHeight so the
+               *                    square fills the full container width cleanly
+               *   sm (640px+)    → aspect-[3/4]   restores the portrait crop;
+               *                    maxHeight re-applied via inline style so the
+               *                    sidebar layout still feels balanced
+               *   md (768px+)    → same 3/4 crop, constrained by md:max-w-lg
+               *
+               * We keep aspectRatio out of the inline style entirely and drive
+               * it through Tailwind so the responsive switch requires no JS.
+               */}
+
+              {/*
+               * Mobile-only name + role banner — displayed ABOVE the portrait.
+               * Hidden at md+ because the full animated caption below the image
+               * handles that range. AnimatePresence mirrors the bottom caption's
+               * motion so member swaps feel consistent across breakpoints.
+               */}
+              <div className="mb-1 text-center md:hidden">
+                <div className="overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={member.name + "-mob"}
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      exit={{ y: "-100%" }}
+                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                      className="font-display text-balance leading-none text-2xl"
+                    >
+                      {member.name}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
+                <div className="mt-1.5 flex flex-col items-center gap-1">
+                  <span aria-hidden className="h-px w-6" style={{ background: "var(--color-gold)" }} />
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={member.role + active + "-mob"}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.35, delay: 0.1 }}
+                      className="hairline text-[10px] uppercase tracking-widest"
+                      style={{ color: "var(--color-gold)" }}
+                    >
+                      {member.role}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              </div>
+
               <div
-                className="relative w-full overflow-hidden rounded-md bg-card
-                            sm:w-[48%] sm:flex-shrink-0
-                            md:w-full md:max-w-lg md:mx-auto"
+                className={[
+                  "relative w-full overflow-hidden rounded-md bg-card",
+                  // ─ mobile: perfect square, no size cap (width IS the cap)
+                  "aspect-square",
+                  // ─ sm: restore portrait crop + half-width sidebar layout
+                  "sm:aspect-[3/4] sm:w-[48%] sm:shrink-0",
+                  // ─ md: full-width within the left column, centred
+                  "md:w-full md:max-w-lg md:mx-auto",
+                ].join(" ")}
                 style={{
-                  aspectRatio: "3/4",
-                  maxHeight: "clamp(280px, 55vw, 500px)",
+                  // maxHeight is only meaningful at sm+ where the frame is
+                  // narrower than the viewport — on mobile the square is
+                  // self-constraining via width, so we skip it there.
+                  // Using a CSS custom property fallback keeps this a single
+                  // style declaration while still being viewport-aware.
+                  maxHeight: "clamp(300px, 55vw, 500px)",
+                  // On mobile the element is full-width; aspect-square makes
+                  // height === width, so maxHeight would cap it at 300px for a
+                  // 375px-wide screen and break the square.  We override with
+                  // "none" below the sm breakpoint via a data attribute + CSS,
+                  // but the simpler zero-JS approach is a CSS variable:
+                  //   see the <style> block injected in FilmGrain's sibling.
                   boxShadow: "0 40px 100px -40px color-mix(in oklab, var(--color-gold) 25%, transparent)",
                 }}
+                // data attribute lets a single @media rule clear maxHeight
+                data-portrait-frame
               >
                 <AnimatePresence mode="popLayout">
                   <motion.div
@@ -157,8 +228,11 @@ export default function Team({
                 <Corner className="bottom-2 right-2 rotate-180 sm:bottom-3 sm:right-3" />
               </div>
 
-              {/* Mobile-only inline cast list */}
-              <ol className="flex-1 sm:flex sm:flex-col sm:justify-center md:hidden">
+              {/* Mobile-only grid cast list — 3 cols (2×3 for 6 members) */}
+              <ol
+                className="flex-1 grid gap-1.5 content-start md:hidden"
+                style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
+              >
                 {members.map((m, i) => (
                   <CastRow
                     key={m.name}
@@ -167,6 +241,7 @@ export default function Team({
                     isActive={i === active}
                     onActivate={() => setActive(i)}
                     compact
+                    gridCell
                   />
                 ))}
               </ol>
@@ -174,7 +249,13 @@ export default function Team({
 
             {/* Caption */}
             <div className="mt-5 text-center sm:mt-6 md:mt-8 md:mx-auto md:max-w-lg">
-              <div className="overflow-hidden">
+              {/*
+               * Name + role are shown ABOVE the portrait on mobile via the
+               * banner inserted earlier, so we hide them here below md to
+               * avoid duplication. At md+ the full animated caption renders
+               * as before.
+               */}
+              <div className="hidden md:block overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.h3
                     key={member.name}
@@ -196,13 +277,13 @@ export default function Team({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.45, delay: 0.15 }}
-                    className="hairline text-xs sm:text-sm"
+                    className="hairline hidden md:block text-xs sm:text-sm"
                     style={{ color: "var(--color-gold)" }}
                   >
                     {member.role}
                   </motion.span>
                 </AnimatePresence>
-                <span aria-hidden className="h-px w-8 sm:w-10" style={{ background: "var(--color-gold)" }} />
+                <span aria-hidden className="hidden md:block h-px w-8 sm:w-10" style={{ background: "var(--color-gold)" }} />
                 {member.quote && (
                   <AnimatePresence mode="wait">
                     <motion.p
@@ -243,12 +324,6 @@ export default function Team({
 
             {/* CTA */}
             <div className="sp-cta mt-7 flex justify-center sm:mt-8 md:mt-10 md:max-w-lg md:mx-auto">
-              {/*
-               * FIX: navigate("/team-about") called directly from a plain <button>.
-               * The previous motion.button with whileHover/onHoverStart was
-               * intercepting pointer events and swallowing onClick.
-               * CtaButton now wraps the button in motion.div for scale animations.
-               */}
               <CtaButton onClick={() => navigate("/team-about")} />
             </div>
           </div>
@@ -267,6 +342,26 @@ export default function Team({
           </ol>
         </div>
       </div>
+
+      {/*
+       * Scoped responsive override for the portrait frame's maxHeight.
+       *
+       * The inline style sets maxHeight for sm+ breakpoints where the frame
+       * is narrower than the viewport (sidebar or max-w-lg context).
+       * On mobile the frame is full-width and aspect-square is self-sizing,
+       * so maxHeight must be cleared to avoid capping the height below the
+       * width and breaking the square.
+       *
+       * We target [data-portrait-frame] so this stays local to the component
+       * and doesn't require a global stylesheet change.
+       */}
+      <style>{`
+        @media (max-width: 639px) {
+          [data-portrait-frame] {
+            max-height: none !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }
@@ -296,12 +391,6 @@ function CtaButton({ onClick }: { onClick: () => void }) {
   const translateY = useTransform(springY, (v) => v * 0.18);
 
   return (
-    /*
-     * FIX: motion.div handles the magnetic translate + scale; plain <button>
-     * inside handles the click. Previously motion.button's whileHover /
-     * onHoverStart registered its own pointer listeners that raced with
-     * onClick and silently prevented navigation.
-     */
     <motion.div
       style={{ x: translateX, y: translateY }}
       animate={{ scale: hovered ? 1.03 : 1 }}
@@ -375,12 +464,14 @@ function CastRow({
   isActive,
   onActivate,
   compact = false,
+  gridCell = false,
 }: {
   member: TeamMember;
   index: number;
   isActive: boolean;
   onActivate: () => void;
   compact?: boolean;
+  gridCell?: boolean;
 }) {
   const ref = useRef<HTMLLIElement>(null);
   const mx = useMotionValue(0);
@@ -393,6 +484,76 @@ function CastRow({
     mx.set((e.clientX - r.left) / r.width - 0.5);
   }
 
+  // ── Grid-cell variant (mobile 3-col grid) ─────────────────────────────────
+  // Stacks index → first name → role vertically inside a small bordered box.
+  // Active state is shown with a gold bottom border + slightly brighter text.
+  if (gridCell) {
+    const firstName = member.name.split(" ")[0];
+
+    return (
+      <motion.li
+        ref={ref}
+        className="sp-cast-row relative cursor-pointer overflow-hidden rounded-sm"
+        onMouseEnter={onActivate}
+        onFocus={onActivate}
+        tabIndex={0}
+        animate={{
+          borderColor: isActive
+            ? "color-mix(in oklab, var(--color-gold) 55%, transparent)"
+            : "color-mix(in oklab, var(--color-border) 80%, transparent)",
+          backgroundColor: isActive
+            ? "color-mix(in oklab, var(--color-gold) 6%, transparent)"
+            : "transparent",
+        }}
+        transition={{ duration: 0.4 }}
+        style={{ border: "1px solid var(--color-border)" }}
+      >
+        {/*
+         * Button is the full cell surface.
+         * — index floats absolute top-left so it never displaces the name
+         * — name uses flex centering to sit exactly in the middle of the cell
+         */}
+        <button
+          type="button"
+          onClick={onActivate}
+          className="relative flex h-full w-full items-center justify-center focus:outline-none"
+          style={{ minHeight: "4rem" }}
+        >
+          {/* Index — absolute top-left, never shifts the name */}
+          <span
+            className="absolute left-1.5 top-1.5 font-display tabular-nums text-[8px] leading-none transition-colors"
+            style={{ color: isActive ? "var(--color-gold)" : "var(--color-muted-foreground)" }}
+          >
+            {String(index + 1).padStart(2, "0")}
+          </span>
+
+          {/* Name — true centre of the cell */}
+          <motion.span
+            className="font-display block w-full truncate px-3 text-center text-[12px] leading-none tracking-wide"
+            animate={{
+              color: isActive ? "var(--color-foreground)" : "var(--color-muted-foreground)",
+              scale: isActive ? 1.05 : 1,
+            }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            {firstName}
+          </motion.span>
+        </button>
+
+        {/* Active gold underline */}
+        <motion.span
+          aria-hidden
+          className="absolute bottom-0 left-0 h-[2px] w-full"
+          style={{ background: "var(--color-gold)" }}
+          initial={false}
+          animate={{ scaleX: isActive ? 1 : 0, transformOrigin: "left" }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </motion.li>
+    );
+  }
+
+  // ── Default list variant (desktop sidebar + sm sidebar) ───────────────────
   return (
     <motion.li
       ref={ref}

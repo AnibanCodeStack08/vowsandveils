@@ -53,7 +53,7 @@ const Flimreel = () => {
       ([e]) => {
         setInView(e.isIntersecting);
         if (e.isIntersecting) {
-          v.play().catch(() => {});
+          v.play().catch(() => { });
           if (hasInteractedRef.current) {
             v.muted = false;
             fadeVolume(v, 1);
@@ -84,7 +84,7 @@ const Flimreel = () => {
       hasInteractedRef.current = true;
       v.muted = false;
       v.volume = 0;
-      v.play().catch(() => {});
+      v.play().catch(() => { });
       fadeVolume(v, 1);
       setMuted(false);
     } else {
@@ -171,6 +171,10 @@ const Flimreel = () => {
         <div
           aria-hidden={!inView}
           className="flimreel-bg-layer fixed inset-0 -z-10 pointer-events-none overflow-hidden bg-black"
+          style={{
+            opacity: inView ? 1 : 0,
+            transition: "opacity 0.4s ease",
+          }}
         >
           <video
             ref={videoRef}
